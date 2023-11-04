@@ -1,5 +1,6 @@
 package com.interpreter.relational.service;
 
+import com.google.common.collect.ImmutableList;
 import com.interpreter.relational.repository.RelationRepository;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
@@ -10,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.interpreter.relational.operation.Division.division;
 import static com.interpreter.relational.operation.Projection.projection;
@@ -18,6 +20,20 @@ import static com.interpreter.relational.operation.Projection.projection;
 @RequiredArgsConstructor
 public class InterpreterService {
     private final RelationRepository relationRepository;
+
+    public Set<Map<String, Collection<String>>> resultConversion(Set<Multimap<String, String>> resultSet) {
+        Set<Map<String, Collection<String>>> mappedSet = new HashSet<>();
+        for (Multimap<String, String> resultMap : resultSet) {
+            Map<String, Collection<String>> map = resultMap.asMap().entrySet()
+                    .stream()
+                    .collect(Collectors.toMap(
+                            Map.Entry::getKey,
+                            (entry) -> ImmutableList.copyOf(entry.getValue())
+                    ));
+            mappedSet.add(map);
+        }
+        return mappedSet;
+    }
 
     public Set<Multimap<String, String>> inputProcessing(List<String> query) throws IllegalAccessException {
         Map<String, Set<Multimap<String, String>>> relationMap = relationRepository.newMap();

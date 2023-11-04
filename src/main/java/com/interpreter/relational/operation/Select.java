@@ -125,13 +125,19 @@ public class Select {
                 case "OR":
                     op1 = results.pop();
                     op2 = results.pop();
-                    result = Sets.union((Set<Multimap<String, String>>) op2, (Set<Multimap<String, String>>) op1);
+                    result = Sets.union(
+                            (Set<Multimap<String, String>>) op2,
+                            (Set<Multimap<String, String>>) op1
+                    );
                     results.push(result);
                     break;
                 case "AND":
                     op1 = results.pop();
                     op2 = results.pop();
-                    result = Sets.intersection((Set<Multimap<String, String>>) op2, (Set<Multimap<String, String>>) op1);
+                    result = Sets.intersection(
+                            (Set<Multimap<String, String>>) op2,
+                            (Set<Multimap<String, String>>) op1
+                    );
                     results.push(result);
                     break;
                 default:

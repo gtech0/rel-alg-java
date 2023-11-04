@@ -1,7 +1,5 @@
 package com.interpreter.relational.controller;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Multimap;
 import com.interpreter.relational.service.InterpreterService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -11,7 +9,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @RequestMapping("/interpreter")
 @RestController
@@ -30,19 +27,10 @@ public class InterpreterController {
                 "JOIN T5 AND T4 OVER group username phone"
         );
 
-        Set<Map<String, Collection<String>>> mappedSet = new HashSet<>();
-
-        Set<Multimap<String, String>> resultSet = interpreterService.inputProcessing(query);
-        for (Multimap<String, String> resultMap : resultSet) {
-            Map<String, Collection<String>> map = resultMap.asMap().entrySet()
-                    .stream()
-                    .collect(Collectors.toMap(
-                            Map.Entry::getKey,
-                            (entry) -> ImmutableList.copyOf(entry.getValue())
-                    ));
-            mappedSet.add(map);
-        }
-
-        return ResponseEntity.status(HttpStatus.OK).body(mappedSet);
+        return ResponseEntity.status(HttpStatus.OK).body(
+                interpreterService.resultConversion(
+                        interpreterService.inputProcessing(query)
+                )
+        );
     }
 }

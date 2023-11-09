@@ -1,5 +1,6 @@
 package com.interpreter.relational.service;
 
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
 import com.interpreter.relational.repository.RelationRepository;
 import com.google.common.collect.Multimap;
@@ -21,6 +22,10 @@ import static com.interpreter.relational.operation.Projection.projection;
 public class InterpreterService {
     private final RelationRepository relationRepository;
 
+//    public Set<Map<String, Collection<String>>> getRelation(String relName) {
+//
+//    }
+
     public Set<Map<String, Collection<String>>> resultConversion(Set<Multimap<String, String>> resultSet) {
         Set<Map<String, Collection<String>>> mappedSet = new HashSet<>();
         for (Multimap<String, String> resultMap : resultSet) {
@@ -35,8 +40,29 @@ public class InterpreterService {
         return mappedSet;
     }
 
-    public Set<Multimap<String, String>> inputProcessing(List<String> query) throws IllegalAccessException {
-        Map<String, Set<Multimap<String, String>>> relationMap = relationRepository.newMap();
+    public Map<String, Set<Multimap<String, String>>> inputConversion(Map<String, Set<Map<String, String>>> input) {
+        Map<String, Set<Multimap<String, String>>> data = new HashMap<>();
+        input.forEach(
+                (k, v) -> {
+                    Set<Multimap<String, String>> newSet = new HashSet<>();
+                    v.forEach(
+                            map -> {
+                                Multimap<String, String> newMultimap = ArrayListMultimap.create();
+                                map.forEach(newMultimap::put);
+                                newSet.add(newMultimap);
+                            }
+                    );
+                    data.put(k, newSet);
+                }
+        );
+        return data;
+    }
+
+    public Set<Multimap<String, String>> inputProcessing(List<String> query,
+                                                         Map<String, Set<Map<String, String>>> data
+    ) {
+        relationRepository.storeInMap(inputConversion(data));
+        Map<String, Set<Multimap<String, String>>> relationMap = relationRepository.findAll();
 
         if (query.isEmpty()) {
             return new HashSet<>();
@@ -60,8 +86,8 @@ public class InterpreterService {
             switch (tokenizedOperation[0]) {
                 case "UNION":
                     result = Sets.union(
-                            relationMap.get(tokenizedOperation[1]),
-                            relationMap.get(tokenizedOperation[3])
+                            relationRepository.getRelation(tokenizedOperation[1]),
+                            relationRepository.getRelation(tokenizedOperation[3])
                     );
 
                     if (queryIterator.hasNext())
@@ -71,8 +97,8 @@ public class InterpreterService {
                     break;
                 case "DIFFERENCE":
                     result = Sets.difference(
-                            relationMap.get(tokenizedOperation[1]),
-                            relationMap.get(tokenizedOperation[3])
+                            relationRepository.getRelation(tokenizedOperation[1]),
+                            relationRepository.getRelation(tokenizedOperation[3])
                     );
 
                     if (queryIterator.hasNext())
@@ -82,8 +108,8 @@ public class InterpreterService {
                     break;
                 case "TIMES":
                     result = CartesianProduct.product(
-                            relationMap.get(tokenizedOperation[1]),
-                            relationMap.get(tokenizedOperation[3])
+                            relationRepository.getRelation(tokenizedOperation[1]),
+                            relationRepository.getRelation(tokenizedOperation[3])
                     );
 
                     if (queryIterator.hasNext())
@@ -93,8 +119,8 @@ public class InterpreterService {
                     break;
                 case "INTERSECT":
                     result = Sets.intersection(
-                            relationMap.get(tokenizedOperation[1]),
-                            relationMap.get(tokenizedOperation[3])
+                            relationRepository.getRelation(tokenizedOperation[1]),
+                            relationRepository.getRelation(tokenizedOperation[3])
                     );
 
                     if (queryIterator.hasNext())
@@ -104,7 +130,7 @@ public class InterpreterService {
                     break;
                 case "PROJECT":
                     result = projection(
-                            relationMap.get(tokenizedOperation[1]),
+                            relationRepository.getRelation(tokenizedOperation[1]),
                             Arrays.stream(Arrays.copyOfRange(tokenizedOperation, 3, lastAttribute)).toList()
                     );
 
@@ -115,7 +141,7 @@ public class InterpreterService {
                     break;
                 case "SELECT":
                     result = Select.selection(
-                            relationMap.get(tokenizedOperation[1]),
+                            relationRepository.getRelation(tokenizedOperation[1]),
                             Arrays.stream(Arrays.copyOfRange(tokenizedOperation, 3, lastAttribute)).toList()
                     );
 
@@ -126,8 +152,8 @@ public class InterpreterService {
                     break;
                 case "DIVIDE":
                     result = division(
-                            relationMap.get(tokenizedOperation[1]),
-                            relationMap.get(tokenizedOperation[3]),
+                            relationRepository.getRelation(tokenizedOperation[1]),
+                            relationRepository.getRelation(tokenizedOperation[3]),
                             Arrays.stream(Arrays.copyOfRange(tokenizedOperation, 5, lastAttribute)).toList()
                     );
 
@@ -138,8 +164,8 @@ public class InterpreterService {
                     break;
                 case "JOIN":
                     result = Join.join(
-                            relationMap.get(tokenizedOperation[1]),
-                            relationMap.get(tokenizedOperation[3]),
+                            relationRepository.getRelation(tokenizedOperation[1]),
+                            relationRepository.getRelation(tokenizedOperation[3]),
                             Arrays.stream(Arrays.copyOfRange(tokenizedOperation, 5, lastAttribute)).toList()
                     );
 

@@ -1,12 +1,15 @@
 package com.interpreter.relational.controller;
 
+import com.interpreter.relational.dto.DataDto;
 import com.interpreter.relational.service.InterpreterService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 @CrossOrigin(origins = "*")
 @RequestMapping("/interpreter")
@@ -16,8 +19,7 @@ public class InterpreterController {
     private final InterpreterService interpreterService;
 
     @PostMapping(value = "/execute")
-    public ResponseEntity<Set<Map<String, Collection<String>>>> execute(@RequestBody List<String> query)
-            throws IllegalAccessException {
+    public ResponseEntity<Set<Map<String, Collection<String>>>> execute(@RequestBody DataDto dto) {
 //        List<String> testQuery = Arrays.asList(
 //                "SELECT R2 WHERE ( NOT phone = 135121 OR username = \"andrew\" ) AND NOT username = \"jim\" -> T1",
 //                "DIFFERENCE R1 AND T1 -> T2",
@@ -26,14 +28,16 @@ public class InterpreterController {
 //                "TIMES R3 AND T4 -> T5",
 //                "JOIN T5 AND T4 OVER group username phone"
 //        );
-//
-//        System.out.println(query);
-//        List<String> finalQuery = testQuery;
 
         return ResponseEntity.status(HttpStatus.OK).body(
                 interpreterService.resultConversion(
-                        interpreterService.inputProcessing(query)
+                        interpreterService.inputProcessing(dto.getQuery(), dto.getRelations())
                 )
         );
     }
+
+//    @GetMapping
+//    public ResponseEntity<Set<Map<String, Collection<String>>>> getRelation(String relName) {
+//
+//    }
 }

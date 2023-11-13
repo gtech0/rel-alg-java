@@ -1,8 +1,8 @@
 package com.interpreter.relational.operation;
 
-import com.interpreter.relational.exception.BaseException;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
+import com.interpreter.relational.exception.BaseException;
 
 import java.util.*;
 
@@ -16,34 +16,22 @@ public class Select {
         Stack<Object> results = new Stack<>();
         for (String token : RPN) {
             boolean notCheck = false;
-            Object op1;
-            Object op2;
-            String finalOp1;
-            String finalOp2;
             Set<Multimap<String, String>> result;
             //try {
             switch (token) {
-                case "=":
-                case "!=":
-                case ">":
-                case "<":
-                case ">=":
-                case "<=":
-                    op1 = results.pop();
+                case "=", "!=", ">", "<", ">=", "<=" -> {
+                    String op1 = (String) results.pop();
                     if (Objects.equals(results.peek(), "NOT")) {
                         notCheck = true;
                         results.pop();
                     }
-                    boolean finalNotCheck1 = notCheck;
-
-                    op2 = results.pop();
+                    boolean finalNotCheck = notCheck;
+                    String op2 = (String) results.pop();
 
                     result = new HashSet<>();
-                    finalOp2 = (String) op2;
-                    finalOp1 = (String) op1;
                     relation.forEach(map -> {
-                                Collection<String> mapValues2 = map.get(finalOp2);
-                                Collection<String> mapValues1 = map.get(finalOp1);
+                                Collection<String> mapValues2 = map.get(op1);
+                                Collection<String> mapValues1 = map.get(op2);
                                 if (!mapValues2.isEmpty() && !mapValues1.isEmpty()) {
                                     mapValues2.forEach(
                                             value2 -> mapValues1.forEach(
@@ -52,7 +40,7 @@ public class Select {
                                                             map,
                                                             value2,
                                                             value1,
-                                                            finalNotCheck1,
+                                                            finalNotCheck,
                                                             result
                                                     )
                                             )
@@ -63,8 +51,8 @@ public class Select {
                                                     token,
                                                     map,
                                                     value2,
-                                                    finalOp1,
-                                                    finalNotCheck1,
+                                                    op1,
+                                                    finalNotCheck,
                                                     result
                                             )
                                     );
@@ -73,37 +61,32 @@ public class Select {
                                             value1 -> valueComparator(
                                                     token,
                                                     map,
-                                                    finalOp2,
+                                                    op2,
                                                     value1,
-                                                    finalNotCheck1,
+                                                    finalNotCheck,
                                                     result
                                             )
                                     );
-                                } else  {
+                                } else {
                                     valueComparator(
                                             token,
                                             map,
-                                            finalOp2,
-                                            finalOp1,
-                                            finalNotCheck1,
+                                            op2,
+                                            op1,
+                                            finalNotCheck,
                                             result
                                     );
                                 }
                             }
                     );
                     results.push(result);
-                    break;
-                case "+":
-                case "-":
-                case "*":
-                case "/":
-                    op1 = results.pop();
-                    op2 = results.pop();
-                    finalOp1 = (String) op1;
-                    finalOp2 = (String) op2;
-                    if (isNumeric(finalOp1) && isNumeric(finalOp2)) {
-                        double val1 = Double.parseDouble(finalOp1);
-                        double val2 = Double.parseDouble(finalOp2);
+                }
+                case "+", "-", "*", "/" -> {
+                    String op1 = (String) results.pop();
+                    String op2 = (String) results.pop();
+                    if (isNumeric(op1) && isNumeric(op2)) {
+                        double val1 = Double.parseDouble(op1);
+                        double val2 = Double.parseDouble(op2);
                         switch (token) {
                             case "+":
                                 results.push(Double.toString(val2 + val1));
@@ -121,27 +104,20 @@ public class Select {
                     } else {
                         throw new BaseException("Incorrect mathematical expression");
                     }
-                    break;
-                case "OR":
-                    op1 = results.pop();
-                    op2 = results.pop();
-                    result = Sets.union(
-                            (Set<Multimap<String, String>>) op2,
-                            (Set<Multimap<String, String>>) op1
-                    );
+                }
+                case "OR" -> {
+                    Set<Multimap<String, String>> op1 = (Set<Multimap<String, String>>) results.pop();
+                    Set<Multimap<String, String>> op2 = (Set<Multimap<String, String>>) results.pop();
+                    result = Sets.union(op2, op1);
                     results.push(result);
-                    break;
-                case "AND":
-                    op1 = results.pop();
-                    op2 = results.pop();
-                    result = Sets.intersection(
-                            (Set<Multimap<String, String>>) op2,
-                            (Set<Multimap<String, String>>) op1
-                    );
+                }
+                case "AND" -> {
+                    Set<Multimap<String, String>> op1 = (Set<Multimap<String, String>>) results.pop();
+                    Set<Multimap<String, String>> op2 = (Set<Multimap<String, String>>) results.pop();
+                    result = Sets.intersection(op2, op1);
                     results.push(result);
-                    break;
-                default:
-                    results.push(token);
+                }
+                default -> results.push(token);
             }
 //            } catch (Exception e) {
 //                throw new BaseException("Incorrect SELECT syntax");

@@ -1,0 +1,34 @@
+{
+  "sol1": [
+    {
+      "phone": [
+        "133123"
+      ],
+      "text": [
+        "uiop"
+      ],
+      "username": [
+        "alex",
+        "alex"
+      ],
+      "group": [
+        "group2"
+      ]
+    },
+    {
+      "phone": [
+        "123123"
+      ],
+      "text": [
+        "qwerty"
+      ],
+      "username": [
+        "john",
+        "john"
+      ],
+      "group": [
+        "group1"
+      ]
+    }
+  ]
+}

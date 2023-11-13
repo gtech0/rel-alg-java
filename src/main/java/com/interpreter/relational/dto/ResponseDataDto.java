@@ -1,20 +1,22 @@
 package com.interpreter.relational.dto;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
+@Builder
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class DataDto {
+public class ResponseDataDto {
 
-    private List<String> query;
+    Set<Map<String, Collection<String>>> result;
 
-    private Map<String, Set<Map<String, String>>> relations;
+    Map<String, Set<Map<String, Collection<String>>>> getResults;
 
 }

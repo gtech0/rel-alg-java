@@ -9,9 +9,10 @@ import java.util.Map;
 import java.util.Set;
 
 @Repository
-public class RelationRepository {
+public class TestRelationRepository {
 
     Map<String, Set<Multimap<String, String>>> relationMap = new HashMap<>();
+
     public void storeInMap(Map<String, Set<Multimap<String, String>>> newMap) {
         relationMap.putAll(newMap);
     }

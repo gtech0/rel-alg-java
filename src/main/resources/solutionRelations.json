@@ -1,51 +1,103 @@
 {
-  "R1": [
-    {
-      "username": "john",
-      "phone": "123123",
-      "group": "group1"
-    },
-    {
-      "username": "alex",
-      "phone": "133123",
-      "group": "group2"
-    },
-    {
-      "username": "andrew",
-      "phone": "134123",
-      "group": "group1"
-    },
-    {
-      "username": "jim",
-      "phone": "135121",
-      "group": "group1"
-    }
-  ],
-  "R2": [
-    {
-      "username": "john",
-      "phone": "123123",
-      "group": "group1"
-    },
-    {
-      "username": "andrew",
-      "phone": "134123",
-      "group": "group1"
-    },
-    {
-      "username": "jim",
-      "phone": "135121",
-      "group": "group1"
-    }
-  ],
-  "R3": [
-    {
-      "username": "john",
-      "text": "qwerty"
-    },
-    {
-      "username": "alex",
-      "text": "uiop"
-    }
-  ]
+  "sol1": {
+    "R1": [
+      {
+        "username": [
+          "john"
+        ],
+        "phone": [
+          "123123"
+        ],
+        "group": [
+          "group1"
+        ]
+      },
+      {
+        "username": [
+          "alex"
+        ],
+        "phone": [
+          "133123"
+        ],
+        "group": [
+          "group2"
+        ]
+      },
+      {
+        "username": [
+          "andrew"
+        ],
+        "phone": [
+          "134123"
+        ],
+        "group": [
+          "group1"
+        ]
+      },
+      {
+        "username": [
+          "jim"
+        ],
+        "phone": [
+          "135121"
+        ],
+        "group": [
+          "group1"
+        ]
+      }
+    ],
+    "R2": [
+      {
+        "username": [
+          "john"
+        ],
+        "phone": [
+          "123123"
+        ],
+        "group": [
+          "group1"
+        ]
+      },
+      {
+        "username": [
+          "andrew"
+        ],
+        "phone": [
+          "134123"
+        ],
+        "group": [
+          "group1"
+        ]
+      },
+      {
+        "username": [
+          "jim"
+        ],
+        "phone": [
+          "135121"
+        ],
+        "group": [
+          "group1"
+        ]
+      }
+    ],
+    "R3": [
+      {
+        "username": [
+          "john"
+        ],
+        "text": [
+          "qwerty"
+        ]
+      },
+      {
+        "username": [
+          "alex"
+        ],
+        "text": [
+          "uiop"
+        ]
+      }
+    ]
+  }
 }

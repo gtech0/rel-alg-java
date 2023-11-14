@@ -11,7 +11,7 @@ import java.util.Set;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class RequestDataDto {
+public class RequestTestDataDto {
 
     private List<String> query;
 

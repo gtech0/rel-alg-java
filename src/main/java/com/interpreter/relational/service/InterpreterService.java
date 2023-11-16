@@ -10,7 +10,12 @@ import com.interpreter.relational.operation.Join;
 import com.interpreter.relational.operation.Select;
 import com.interpreter.relational.repository.SolutionRelationRepository;
 import com.interpreter.relational.repository.TestRelationRepository;
+import com.interpreter.relational.util.GenericConverter;
+import com.interpreter.relational.util.MapToMultimapRelation;
+import com.interpreter.relational.util.MultimapToMapRelation;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -18,14 +23,16 @@ import java.util.*;
 
 import static com.interpreter.relational.operation.Division.division;
 import static com.interpreter.relational.operation.Projection.projection;
-import static com.interpreter.relational.util.ConversionMethods.mapToMultimapConversion;
-import static com.interpreter.relational.util.ConversionMethods.multimapToMapConversion;
 
 @Service
 @RequiredArgsConstructor
 public class InterpreterService {
     private final TestRelationRepository testRelationRepository;
     private final SolutionRelationRepository solutionRelationRepository;
+    GenericConverter<Set<Map<String, Collection<String>>>, Set<Multimap<String, String>>> mapToMultimapConverter
+            = new MapToMultimapRelation();
+    GenericConverter<Set<Multimap<String, String>>, Set<Map<String, Collection<String>>>> multimapToMapConverter
+            = new MultimapToMapRelation();
 
     public void checkQuery(List<String> query) {
         for (int i = 0; i < query.size(); i++) {
@@ -70,15 +77,23 @@ public class InterpreterService {
 
     public boolean validation(List<String> query, String problemName) throws IOException {
         solutionRelationRepository.initialize();
-        Set<Multimap<String, String>> solutionResult = solutionRelationRepository
-                .getSolutionResult(problemName);
-        Map<String, Set<Multimap<String, String>>> solutionRelations = solutionRelationRepository
-                .getSolutionRelations(problemName);
+        Collection<String> problemCollection = solutionRelationRepository.getProblemCollection(problemName);
 
-        Set<Multimap<String, String>> result =
-                mapToMultimapConversion(inputProcessing(query, solutionRelations).getResult());
+        for (String problem : problemCollection) {
+            Map<String, Set<Multimap<String, String>>> solutionRelations = solutionRelationRepository
+                    .getSolutionRelations(problem);
+            Set<Multimap<String, String>> result = mapToMultimapConverter
+                    .convert(inputProcessing(query, solutionRelations).getResult());
 
-        return Objects.equals(solutionResult, result);
+            Set<Multimap<String, String>> solutionResult = solutionRelationRepository
+                    .getSolutionResult(problem);
+
+            if (!Objects.equals(solutionResult, result)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public ResponseDataDto inputProcessing(List<String> query,
@@ -107,107 +122,76 @@ public class InterpreterService {
             else
                 lastAttribute = lastIndex + 1;
 
-            Set<Multimap<String, String>> result;
-            try {
-                switch (tokenizedOperation[0]) {
-                    case "UNION" -> {
-                        result = Sets.union(
-                                testRelationRepository.getRelation(tokenizedOperation[1]),
-                                testRelationRepository.getRelation(tokenizedOperation[3])
-                        );
+            Set<Multimap<String, String>> result = new HashSet<>();
+            switch (tokenizedOperation[0]) {
+                case "UNION" -> result = Sets.union(
+                        testRelationRepository.getRelation(tokenizedOperation[1]),
+                        testRelationRepository.getRelation(tokenizedOperation[3])
+                );
+                case "DIFFERENCE" -> result = Sets.difference(
+                        testRelationRepository.getRelation(tokenizedOperation[1]),
+                        testRelationRepository.getRelation(tokenizedOperation[3])
+                );
+                case "TIMES" -> result = CartesianProduct.product(
+                        testRelationRepository.getRelation(tokenizedOperation[1]),
+                        testRelationRepository.getRelation(tokenizedOperation[3])
+                );
+                case "INTERSECT" -> result = Sets.intersection(
+                        testRelationRepository.getRelation(tokenizedOperation[1]),
+                        testRelationRepository.getRelation(tokenizedOperation[3])
+                );
+                case "PROJECT" -> {
+                    String relationName = tokenizedOperation[1];
+                    Pair<String, Set<Multimap<String, String>>> relation =
+                            new ImmutablePair<>(relationName, testRelationRepository.getRelation(relationName));
 
-                        if (queryIterator.hasNext())
-                            relationMap.put(tokenizedOperation[lastIndex], result);
-                        else
-                            return buildResponse(multimapToMapConversion(result), getRelationMap);
-                    }
-                    case "DIFFERENCE" -> {
-                        result = Sets.difference(
-                                testRelationRepository.getRelation(tokenizedOperation[1]),
-                                testRelationRepository.getRelation(tokenizedOperation[3])
-                        );
-
-                        if (queryIterator.hasNext())
-                            relationMap.put(tokenizedOperation[lastIndex], result);
-                        else
-                            return buildResponse(multimapToMapConversion(result), getRelationMap);
-                    }
-                    case "TIMES" -> {
-                        result = CartesianProduct.product(
-                                testRelationRepository.getRelation(tokenizedOperation[1]),
-                                testRelationRepository.getRelation(tokenizedOperation[3])
-                        );
-
-                        if (queryIterator.hasNext())
-                            relationMap.put(tokenizedOperation[lastIndex], result);
-                        else
-                            return buildResponse(multimapToMapConversion(result), getRelationMap);
-                    }
-                    case "INTERSECT" -> {
-                        result = Sets.intersection(
-                                testRelationRepository.getRelation(tokenizedOperation[1]),
-                                testRelationRepository.getRelation(tokenizedOperation[3])
-                        );
-
-                        if (queryIterator.hasNext())
-                            relationMap.put(tokenizedOperation[lastIndex], result);
-                        else
-                            return buildResponse(multimapToMapConversion(result), getRelationMap);
-                    }
-                    case "PROJECT" -> {
-                        result = projection(
-                                testRelationRepository.getRelation(tokenizedOperation[1]),
-                                Arrays.stream(Arrays.copyOfRange(tokenizedOperation, 3, lastAttribute)).toList()
-                        );
-
-                        if (queryIterator.hasNext())
-                            relationMap.put(tokenizedOperation[lastIndex], result);
-                        else
-                            return buildResponse(multimapToMapConversion(result), getRelationMap);
-                    }
-                    case "SELECT" -> {
-                        result = Select.selection(
-                                testRelationRepository.getRelation(tokenizedOperation[1]),
-                                Arrays.stream(Arrays.copyOfRange(tokenizedOperation, 3, lastAttribute)).toList()
-                        );
-
-                        if (queryIterator.hasNext())
-                            relationMap.put(tokenizedOperation[lastIndex], result);
-                        else
-                            return buildResponse(multimapToMapConversion(result), getRelationMap);
-                    }
-                    case "DIVIDE" -> {
-                        result = division(
-                                testRelationRepository.getRelation(tokenizedOperation[1]),
-                                testRelationRepository.getRelation(tokenizedOperation[3]),
-                                Arrays.stream(Arrays.copyOfRange(tokenizedOperation, 5, lastAttribute)).toList()
-                        );
-
-                        if (queryIterator.hasNext())
-                            relationMap.put(tokenizedOperation[lastIndex], result);
-                        else
-                            return buildResponse(multimapToMapConversion(result), getRelationMap);
-                    }
-                    case "JOIN" -> {
-                        result = Join.join(
-                                testRelationRepository.getRelation(tokenizedOperation[1]),
-                                testRelationRepository.getRelation(tokenizedOperation[3]),
-                                Arrays.stream(Arrays.copyOfRange(tokenizedOperation, 5, lastAttribute)).toList()
-                        );
-
-                        if (queryIterator.hasNext())
-                            relationMap.put(tokenizedOperation[lastIndex], result);
-                        else
-                            return buildResponse(multimapToMapConversion(result), getRelationMap);
-                    }
-                    case "GET" -> getRelationMap.put(
-                            tokenizedOperation[1],
-                            multimapToMapConversion(testRelationRepository.getRelation(tokenizedOperation[1]))
+                    result = projection(
+                            relation,
+                            Arrays.stream(Arrays.copyOfRange(tokenizedOperation, 3, lastAttribute)).toList()
                     );
-                    default -> throw new BaseException("Unexpected error");
                 }
-            } catch (Exception e) {
-                throw new BaseException("Exception occurred while executing " + tokenizedOperation[0] + " operation");
+                case "SELECT" -> {
+                    String relationName = tokenizedOperation[1];
+                    Pair<String, Set<Multimap<String, String>>> relation =
+                            new ImmutablePair<>(relationName, testRelationRepository.getRelation(relationName));
+
+                    result = Select.selection(
+                            relation,
+                            Arrays.stream(Arrays.copyOfRange(tokenizedOperation, 3, lastAttribute)).toList()
+                    );
+                }
+                case "DIVIDE" -> {
+                    String relationName1 = tokenizedOperation[1];
+                    Pair<String, Set<Multimap<String, String>>> relation1 =
+                            new ImmutablePair<>(relationName1, testRelationRepository.getRelation(relationName1));
+
+                    String relationName2 = tokenizedOperation[3];
+                    Pair<String, Set<Multimap<String, String>>> relation2 =
+                            new ImmutablePair<>(relationName2, testRelationRepository.getRelation(relationName2));
+
+                    result = division(
+                            relation1,
+                            relation2,
+                            Arrays.stream(Arrays.copyOfRange(tokenizedOperation, 5, lastAttribute)).toList()
+                    );
+                }
+                case "JOIN" -> result = Join.join(
+                        testRelationRepository.getRelation(tokenizedOperation[1]),
+                        testRelationRepository.getRelation(tokenizedOperation[3]),
+                        Arrays.stream(Arrays.copyOfRange(tokenizedOperation, 5, lastAttribute)).toList()
+                );
+                case "GET" -> getRelationMap.put(
+                        tokenizedOperation[1],
+                        multimapToMapConverter.convert(testRelationRepository.getRelation(tokenizedOperation[1]))
+                );
+                default -> throw new BaseException("Unexpected error");
+            }
+            if (queryIterator.hasNext()) {
+                if (!Objects.equals(tokenizedOperation[0], "GET"))
+                    relationMap.put(tokenizedOperation[lastIndex], result);
+            } else {
+                testRelationRepository.clear();
+                return buildResponse(multimapToMapConverter.convert(result), getRelationMap);
             }
         }
         return new ResponseDataDto(new HashSet<>(), new HashMap<>());

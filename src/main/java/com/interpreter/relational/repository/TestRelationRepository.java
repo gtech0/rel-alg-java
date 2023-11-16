@@ -24,7 +24,11 @@ public class TestRelationRepository {
     public Set<Multimap<String, String>> getRelation(String key) {
         Set<Multimap<String, String>> relation = relationMap.get(key);
         if (relation == null)
-            throw new BaseException("Relation is null");
+            throw new BaseException("Relation " + key + " is null");
         return relation;
+    }
+
+    public void clear() {
+        relationMap.clear();
     }
 }

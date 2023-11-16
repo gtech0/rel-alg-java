@@ -3,21 +3,21 @@ package com.interpreter.relational.operation;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.interpreter.relational.exception.BaseException;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
 
 import static org.apache.commons.lang3.StringUtils.isNumeric;
 
 public class Select {
-    public static Set<Multimap<String, String>> selection(Set<Multimap<String, String>> relation,
+    public static Set<Multimap<String, String>> selection(Pair<String, Set<Multimap<String, String>>> relation,
                                                           List<String> tokens) {
         Queue<String> RPN = shuntingYard(tokens);
 
         Stack<Object> results = new Stack<>();
         for (String token : RPN) {
             boolean notCheck = false;
-            Set<Multimap<String, String>> result;
-            //try {
+            Set<Multimap<String, String>> result = new HashSet<>();
             switch (token) {
                 case "=", "!=", ">", "<", ">=", "<=" -> {
                     String op1 = (String) results.pop();
@@ -25,60 +25,13 @@ public class Select {
                         notCheck = true;
                         results.pop();
                     }
-                    boolean finalNotCheck = notCheck;
                     String op2 = (String) results.pop();
 
-                    result = new HashSet<>();
-                    relation.forEach(map -> {
-                                Collection<String> mapValues2 = map.get(op1);
-                                Collection<String> mapValues1 = map.get(op2);
-                                if (!mapValues2.isEmpty() && !mapValues1.isEmpty()) {
-                                    mapValues2.forEach(
-                                            value2 -> mapValues1.forEach(
-                                                    value1 -> valueComparator(
-                                                            token,
-                                                            map,
-                                                            value2,
-                                                            value1,
-                                                            finalNotCheck,
-                                                            result
-                                                    )
-                                            )
-                                    );
-                                } else if (!mapValues2.isEmpty()) {
-                                    mapValues2.forEach(
-                                            value2 -> valueComparator(
-                                                    token,
-                                                    map,
-                                                    value2,
-                                                    op1,
-                                                    finalNotCheck,
-                                                    result
-                                            )
-                                    );
-                                } else if (!mapValues1.isEmpty()) {
-                                    mapValues1.forEach(
-                                            value1 -> valueComparator(
-                                                    token,
-                                                    map,
-                                                    op2,
-                                                    value1,
-                                                    finalNotCheck,
-                                                    result
-                                            )
-                                    );
-                                } else {
-                                    valueComparator(
-                                            token,
-                                            map,
-                                            op2,
-                                            op1,
-                                            finalNotCheck,
-                                            result
-                                    );
-                                }
-                            }
-                    );
+                    for (Multimap<String, String> map : relation.getRight()) {
+                        Collection<String> mapValues2 = map.get(op1);
+                        Collection<String> mapValues1 = map.get(op2);
+                        attributeCheck(token, map, mapValues2, mapValues1, notCheck, result, op1, op2);
+                    }
                     results.push(result);
                 }
                 case "+", "-", "*", "/" -> {
@@ -87,20 +40,7 @@ public class Select {
                     if (isNumeric(op1) && isNumeric(op2)) {
                         double val1 = Double.parseDouble(op1);
                         double val2 = Double.parseDouble(op2);
-                        switch (token) {
-                            case "+":
-                                results.push(Double.toString(val2 + val1));
-                                break;
-                            case "-":
-                                results.push(Double.toString(val2 - val1));
-                                break;
-                            case "*":
-                                results.push(Double.toString(val2 * val1));
-                                break;
-                            case "/":
-                                results.push(Double.toString(val2 / val1));
-                                break;
-                        }
+                        simpleMathParser(token, results, val2, val1);
                     } else {
                         throw new BaseException("Incorrect mathematical expression");
                     }
@@ -119,15 +59,52 @@ public class Select {
                 }
                 default -> results.push(token);
             }
-//            } catch (Exception e) {
-//                throw new BaseException("Incorrect SELECT syntax");
-//            }
         }
 
         if (results.empty()) {
             return new HashSet<>();
         }
         return (Set<Multimap<String, String>>) results.firstElement();
+    }
+
+    private static void simpleMathParser(String token, Stack<Object> results, double val2, double val1) {
+        switch (token) {
+            case "+":
+                results.push(Double.toString(val2 + val1));
+                break;
+            case "-":
+                results.push(Double.toString(val2 - val1));
+                break;
+            case "*":
+                results.push(Double.toString(val2 * val1));
+                break;
+            case "/":
+                results.push(Double.toString(val2 / val1));
+                break;
+        }
+    }
+
+    private static void attributeCheck(String token,
+                                       Multimap<String, String> map,
+                                       Collection<String> mapValues2,
+                                       Collection<String> mapValues1,
+                                       boolean notCheck,
+                                       Set<Multimap<String, String>> result,
+                                       String op1, String op2
+    ) {
+        if (!mapValues2.isEmpty() && !mapValues1.isEmpty()) {
+            mapValues2.forEach(
+                    value2 -> mapValues1.forEach(
+                            value1 -> valueComparator(token, map, value2, value1, notCheck, result)
+                    )
+            );
+        } else if (!mapValues2.isEmpty()) {
+            mapValues2.forEach(value2 -> valueComparator(token, map, value2, op1, notCheck, result));
+        } else if (!mapValues1.isEmpty()) {
+            mapValues1.forEach(value1 -> valueComparator(token, map, op2, value1, notCheck, result));
+        } else {
+            valueComparator(token, map, op2, op1, notCheck, result);
+        }
     }
 
     private static void valueComparator(
@@ -174,8 +151,8 @@ public class Select {
             if (isNumeric(value) && isNumeric(op1)) {
                 double currentVal = Double.parseDouble(value);
                 double newVal = Double.parseDouble(op1);
-                if ((Objects.equals(token, "=") &&
-                        (currentVal == newVal && !finalNotCheck1 || currentVal != newVal && finalNotCheck1))
+                if ((Objects.equals(token, "=")
+                        && (currentVal == newVal && !finalNotCheck1 || currentVal != newVal && finalNotCheck1))
 
                         || (Objects.equals(token, "!=")
                         && (currentVal != newVal && !finalNotCheck1 || currentVal == newVal && finalNotCheck1))
@@ -186,13 +163,15 @@ public class Select {
                     && op1.endsWith("\"")
                     && op1.chars().filter(c -> c == '\"').count() == 2
             ) {
-                String currentVal = value.replaceAll("\"", "");
-                String newVal = op1.replaceAll("\"", "");
+                String currentStrVal = value.replaceAll("\"", "");
+                String newStrVal = op1.replaceAll("\"", "");
                 if ((Objects.equals(token, "=")
-                        && (Objects.equals(currentVal, newVal) && !finalNotCheck1 || !Objects.equals(currentVal, newVal) && finalNotCheck1))
+                        && (Objects.equals(currentStrVal, newStrVal) && !finalNotCheck1
+                        || !Objects.equals(currentStrVal, newStrVal) && finalNotCheck1))
 
                         || (Objects.equals(token, "!=")
-                        && (!Objects.equals(currentVal, newVal) && !finalNotCheck1 || Objects.equals(currentVal, newVal) && finalNotCheck1))
+                        && (!Objects.equals(currentStrVal, newStrVal) && !finalNotCheck1
+                        || Objects.equals(currentStrVal, newStrVal) && finalNotCheck1))
                 ) {
                     result.add(map);
                 }

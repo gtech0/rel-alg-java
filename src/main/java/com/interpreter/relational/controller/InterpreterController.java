@@ -3,6 +3,7 @@ package com.interpreter.relational.controller;
 import com.interpreter.relational.dto.RequestTestDataDto;
 import com.interpreter.relational.dto.RequestValidationDataDto;
 import com.interpreter.relational.dto.ResponseDataDto;
+import com.interpreter.relational.dto.ResultDto;
 import com.interpreter.relational.service.InterpreterService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -37,7 +38,7 @@ public class InterpreterController {
     }
 
     @PostMapping(value = "/validate")
-    public ResponseEntity<Boolean> sendForValidation(@RequestBody RequestValidationDataDto dto)
+    public ResponseEntity<ResultDto> sendForValidation(@RequestBody RequestValidationDataDto dto)
             throws IOException {
 
         return ResponseEntity

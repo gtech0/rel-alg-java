@@ -7,13 +7,14 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
 
+import static com.interpreter.relational.util.AttributeClass.extractAttribute;
 import static org.apache.commons.lang3.StringUtils.isNumeric;
 
 public class Select {
     public static Set<Multimap<String, String>> selection(Pair<String, Set<Multimap<String, String>>> relation,
                                                           List<String> tokens) {
         Queue<String> RPN = shuntingYard(tokens);
-
+        String relationName = relation.getLeft();
         Stack<Object> results = new Stack<>();
         for (String token : RPN) {
             boolean notCheck = false;
@@ -28,22 +29,19 @@ public class Select {
                     String op2 = (String) results.pop();
 
                     for (Multimap<String, String> map : relation.getRight()) {
-                        Collection<String> mapValues2 = map.get(op1);
-                        Collection<String> mapValues1 = map.get(op2);
-                        attributeCheck(token, map, mapValues2, mapValues1, notCheck, result, op1, op2);
+                        String attribute1 = extractAttribute(List.of(relationName), op1);
+                        String attribute2 = extractAttribute(List.of(relationName), op2);
+
+                        Collection<String> mapValues1 = map.get(attribute1);
+                        Collection<String> mapValues2 = map.get(attribute2);
+                        attributeExist(token, map, mapValues1, mapValues2, notCheck, result, op1, op2);
                     }
                     results.push(result);
                 }
                 case "+", "-", "*", "/" -> {
                     String op1 = (String) results.pop();
                     String op2 = (String) results.pop();
-                    if (isNumeric(op1) && isNumeric(op2)) {
-                        double val1 = Double.parseDouble(op1);
-                        double val2 = Double.parseDouble(op2);
-                        simpleMathParser(token, results, val2, val1);
-                    } else {
-                        throw new BaseException("Incorrect mathematical expression");
-                    }
+                    simpleMathParser(token, op1, op2, results);
                 }
                 case "OR" -> {
                     Set<Multimap<String, String>> op1 = (Set<Multimap<String, String>>) results.pop();
@@ -67,24 +65,30 @@ public class Select {
         return (Set<Multimap<String, String>>) results.firstElement();
     }
 
-    private static void simpleMathParser(String token, Stack<Object> results, double val2, double val1) {
-        switch (token) {
-            case "+":
-                results.push(Double.toString(val2 + val1));
-                break;
-            case "-":
-                results.push(Double.toString(val2 - val1));
-                break;
-            case "*":
-                results.push(Double.toString(val2 * val1));
-                break;
-            case "/":
-                results.push(Double.toString(val2 / val1));
-                break;
+    private static void simpleMathParser(String token, String op1, String op2, Stack<Object> results) {
+        if (isNumeric(op1) && isNumeric(op2)) {
+            double val1 = Double.parseDouble(op1);
+            double val2 = Double.parseDouble(op2);
+            switch (token) {
+                case "+":
+                    results.push(Double.toString(val2 + val1));
+                    break;
+                case "-":
+                    results.push(Double.toString(val2 - val1));
+                    break;
+                case "*":
+                    results.push(Double.toString(val2 * val1));
+                    break;
+                case "/":
+                    results.push(Double.toString(val2 / val1));
+                    break;
+            }
+        } else {
+            throw new BaseException("Incorrect mathematical expression");
         }
     }
 
-    private static void attributeCheck(String token,
+    private static void attributeExist(String token,
                                        Multimap<String, String> map,
                                        Collection<String> mapValues2,
                                        Collection<String> mapValues1,
@@ -110,68 +114,68 @@ public class Select {
     private static void valueComparator(
             String token,
             Multimap<String, String> map,
-            String value,
-            String op1,
-            boolean finalNotCheck1,
+            String value1,
+            String value2,
+            boolean notCheck,
             Set<Multimap<String, String>> result
     ) {
         if (Objects.equals(token, ">")) {
-            double currentVal = Double.parseDouble(value);
-            double newVal = Double.parseDouble(op1);
-            if (currentVal > newVal && !finalNotCheck1 || currentVal <= newVal && finalNotCheck1) {
+            double currentVal = Double.parseDouble(value1);
+            double newVal = Double.parseDouble(value2);
+            if (currentVal > newVal && !notCheck || currentVal <= newVal && notCheck) {
                 result.add(map);
             }
         }
 
         if (Objects.equals(token, "<")) {
-            double currentVal = Double.parseDouble(value);
-            double newVal = Double.parseDouble(op1);
-            if (currentVal < newVal && !finalNotCheck1 || currentVal >= newVal && finalNotCheck1) {
+            double currentVal = Double.parseDouble(value1);
+            double newVal = Double.parseDouble(value2);
+            if (currentVal < newVal && !notCheck || currentVal >= newVal && notCheck) {
                 result.add(map);
             }
         }
 
         if (Objects.equals(token, ">=")) {
-            double currentVal = Double.parseDouble(value);
-            double newVal = Double.parseDouble(op1);
-            if (currentVal >= newVal && !finalNotCheck1 || currentVal < newVal && finalNotCheck1) {
+            double currentVal = Double.parseDouble(value1);
+            double newVal = Double.parseDouble(value2);
+            if (currentVal >= newVal && !notCheck || currentVal < newVal && notCheck) {
                 result.add(map);
             }
         }
 
         if (Objects.equals(token, "<=")) {
-            double currentVal = Double.parseDouble(value);
-            double newVal = Double.parseDouble(op1);
-            if (currentVal <= newVal && !finalNotCheck1 || currentVal > newVal && finalNotCheck1) {
+            double currentVal = Double.parseDouble(value1);
+            double newVal = Double.parseDouble(value2);
+            if (currentVal <= newVal && !notCheck || currentVal > newVal && notCheck) {
                 result.add(map);
             }
         }
 
         if (Objects.equals(token, "=") || Objects.equals(token, "!=")) {
-            if (isNumeric(value) && isNumeric(op1)) {
-                double currentVal = Double.parseDouble(value);
-                double newVal = Double.parseDouble(op1);
+            if (isNumeric(value1) && isNumeric(value2)) {
+                double currentVal = Double.parseDouble(value1);
+                double newVal = Double.parseDouble(value2);
                 if ((Objects.equals(token, "=")
-                        && (currentVal == newVal && !finalNotCheck1 || currentVal != newVal && finalNotCheck1))
+                        && (currentVal == newVal && !notCheck || currentVal != newVal && notCheck))
 
                         || (Objects.equals(token, "!=")
-                        && (currentVal != newVal && !finalNotCheck1 || currentVal == newVal && finalNotCheck1))
+                        && (currentVal != newVal && !notCheck || currentVal == newVal && notCheck))
                 ) {
                     result.add(map);
                 }
-            } else if (op1.startsWith("\"")
-                    && op1.endsWith("\"")
-                    && op1.chars().filter(c -> c == '\"').count() == 2
+            } else if (value2.startsWith("\"")
+                    && value2.endsWith("\"")
+                    && value2.chars().filter(c -> c == '\"').count() == 2
             ) {
-                String currentStrVal = value.replaceAll("\"", "");
-                String newStrVal = op1.replaceAll("\"", "");
+                String currentStrVal = value1.replaceAll("\"", "");
+                String newStrVal = value2.replaceAll("\"", "");
                 if ((Objects.equals(token, "=")
-                        && (Objects.equals(currentStrVal, newStrVal) && !finalNotCheck1
-                        || !Objects.equals(currentStrVal, newStrVal) && finalNotCheck1))
+                        && (Objects.equals(currentStrVal, newStrVal) && !notCheck
+                        || !Objects.equals(currentStrVal, newStrVal) && notCheck))
 
                         || (Objects.equals(token, "!=")
-                        && (!Objects.equals(currentStrVal, newStrVal) && !finalNotCheck1
-                        || Objects.equals(currentStrVal, newStrVal) && finalNotCheck1))
+                        && (!Objects.equals(currentStrVal, newStrVal) && !notCheck
+                        || Objects.equals(currentStrVal, newStrVal) && notCheck))
                 ) {
                     result.add(map);
                 }

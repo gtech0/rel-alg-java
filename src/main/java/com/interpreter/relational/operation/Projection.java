@@ -6,9 +6,10 @@ import com.interpreter.relational.exception.BaseException;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static com.interpreter.relational.util.AttributeClass.extractAttribute;
 
 public class Projection {
     public static Set<Multimap<String, String>> projection(Pair<String, Set<Multimap<String, String>>> relation,
@@ -19,20 +20,11 @@ public class Projection {
                     Multimap<String, String> newMap = ArrayListMultimap.create();
                     attributes.forEach(
                             attribute -> {
-                                String finalAttribute = attribute;
-                                if (attribute.contains(".")) {
-                                    String[] relationAttribute = attribute.split("\\.");
-                                    if (relationAttribute.length == 2 &&
-                                            Objects.equals(relationAttribute[0], relation.getLeft())) {
-                                        finalAttribute = relationAttribute[1];
-                                    } else {
-                                        throw new BaseException("Relation " + relation.getLeft() + " doesn't exist");
-                                    }
-                                }
+                                String finalAttribute = extractAttribute(List.of(relation.getLeft()), attribute);
 
                                 if (map.containsKey(finalAttribute)) {
                                     map.get(finalAttribute).forEach(
-                                            value -> newMap.put(attribute, value)
+                                            value -> newMap.put(finalAttribute, value)
                                     );
                                 } else {
                                     throw new BaseException("Attribute " + finalAttribute +

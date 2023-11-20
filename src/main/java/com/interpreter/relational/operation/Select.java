@@ -94,7 +94,7 @@ public class Select {
                                        Collection<String> mapValues1,
                                        boolean notCheck,
                                        Set<Multimap<String, String>> result,
-                                       String op1, String op2
+                                       String op2, String op1
     ) {
         if (!mapValues2.isEmpty() && !mapValues1.isEmpty()) {
             mapValues2.forEach(
@@ -114,8 +114,8 @@ public class Select {
     private static void valueComparator(
             String token,
             Multimap<String, String> map,
-            String value1,
             String value2,
+            String value1,
             boolean notCheck,
             Set<Multimap<String, String>> result
     ) {

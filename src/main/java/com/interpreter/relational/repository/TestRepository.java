@@ -5,11 +5,12 @@ import com.interpreter.relational.exception.BaseException;
 import org.springframework.stereotype.Repository;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 
 @Repository
-public class TestRelationRepository {
+public class TestRepository {
 
     Map<String, Set<Multimap<String, String>>> relationMap = new TreeMap<>();
 
@@ -21,8 +22,16 @@ public class TestRelationRepository {
         return relationMap;
     }
 
-    public Set<Multimap<String, String>> getLast() {
-        return ((TreeMap<String, Set<Multimap<String, String>>>) relationMap).lastEntry().getValue();
+    public Set<Multimap<String, String>> getResult() {
+        Map.Entry<String, Set<Multimap<String, String>>> result =
+                ((TreeMap<String, Set<Multimap<String, String>>>) relationMap)
+                .firstEntry();
+
+        if (Objects.equals(result.getKey(), "")) {
+            return result.getValue();
+        } else {
+            throw new BaseException("Unexpected error");
+        }
     }
 
     public Set<Multimap<String, String>> getRelation(String key) {

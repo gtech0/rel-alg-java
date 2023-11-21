@@ -17,7 +17,8 @@ import java.util.Set;
 
 @Repository
 @RequiredArgsConstructor
-public class SolutionRelationRepository {
+public class SolutionRepository {
+
     private final ObjectMapper mapper;
     Map<String, Set<Multimap<String, String>>> solutionResult = new HashMap<>();
     Map<String, Map<String, Set<Multimap<String, String>>>> solutionRelations = new HashMap<>();
@@ -57,17 +58,18 @@ public class SolutionRelationRepository {
     }
 
     public void initialize() throws IOException {
+        String resultPath = "classpath:solutionResult.json";
+        String relationPath = "classpath:solutionResult.json";
+        String problemPath = "classpath:solutionResult.json";
+
         Map<String, Set<Multimap<String, String>>> solutionResult = mapper
-                .readValue(ResourceUtils.getFile("classpath:solutionResult.json"),
-                        new TypeReference<>() {});
+                .readValue(ResourceUtils.getFile(resultPath), new TypeReference<>() {});
 
         Map<String, Map<String, Set<Multimap<String, String>>>> solutionRelations = mapper
-                .readValue(ResourceUtils.getFile("classpath:solutionRelations.json"),
-                        new TypeReference<>() {});
+                .readValue(ResourceUtils.getFile(relationPath), new TypeReference<>() {});
 
         Multimap<String, String> problem = mapper
-                .readValue(ResourceUtils.getFile("classpath:problem.json"),
-                        new TypeReference<>() {});
+                .readValue(ResourceUtils.getFile(problemPath), new TypeReference<>() {});
 
         storeInSolutionResult(solutionResult);
         storeInSolutionRelations(solutionRelations);

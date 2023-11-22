@@ -9,6 +9,8 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
+
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -25,14 +27,14 @@ public class InterpreterControllerTest {
 
     @Test
     void inputResponseShouldBeCorrect() throws Exception {
-        String[] testQuery = new String[] {
+        List<String> testQuery = List.of(
                 "SELECT R2 WHERE ( NOT phone = 135121 OR username = \"andrew\" ) AND NOT username = \"jim\" -> T1",
                 "DIFFERENCE R1 AND T1 -> T2",
                 "DIVIDE R3 BY T2 OVER username -> T3",
                 "JOIN T2 AND T3 OVER username -> T4",
                 "TIMES R3 AND T4 -> T5",
                 "JOIN T4 AND T5 OVER group username phone"
-        };
+        );
 
         when(service.validation(testQuery, "sol1")).thenReturn(new ResultDto("OK"));
         this.mockMvc

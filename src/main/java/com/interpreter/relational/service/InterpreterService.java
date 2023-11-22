@@ -35,11 +35,11 @@ public class InterpreterService {
     GenericConverter<Set<Multimap<String, String>>, Set<Map<String, Collection<String>>>> multimapToMap
             = new MultimapToMapRelation();
 
-    public void checkQuery(String[] query) {
-        for (int i = 0; i < query.length; i++) {
+    public void checkQuery(List<String> query) {
+        for (int i = 0; i < query.size(); i++) {
             Integer index = null;
             for (PatternEnum currentPattern : PatternEnum.values()) {
-                if (currentPattern.patternMatches(query[i])) {
+                if (currentPattern.patternMatches(query.get(i))) {
                     index = i;
                 }
             }
@@ -76,7 +76,7 @@ public class InterpreterService {
                 .build();
     }
 
-    public ResultDto validation(String[] query, String problemName) throws IOException {
+    public ResultDto validation(List<String> query, String problemName) throws IOException {
         solutionRepository.initialize();
         Collection<String> problemCollection = solutionRepository.getProblemCollection(problemName);
         int problemNum = 0;
@@ -99,7 +99,7 @@ public class InterpreterService {
         return new ResultDto("OK");
     }
 
-    public ResponseDataDto inputProcessing(String[] query,
+    public ResponseDataDto inputProcessing(List<String> query,
                                            Map<String, Set<Multimap<String, String>>> data
     ) {
         testRepository.clear();
@@ -107,21 +107,22 @@ public class InterpreterService {
         Map<String, Set<Multimap<String, String>>> relationMap = testRepository.findAll();
         Map<String, Set<Map<String, Collection<String>>>> getRelationMap = new HashMap<>();
 
-        if (query.length == 0) {
+        if (query.isEmpty()) {
             return new ResponseDataDto(new HashSet<>(), new HashMap<>());
         }
 
+        query.removeIf(String::isBlank);
         checkQuery(query);
 
         String lastOp = null;
-        for (int strIndex = 0; strIndex < query.length; strIndex++) {
-            String queryIterator = query[strIndex];
+        for (int strIndex = 0; strIndex < query.size(); strIndex++) {
+            String queryIterator = query.get(strIndex);
             String[] tokenizedOperation = queryIterator.split("\\s+");
 
             int lastIndex = tokenizedOperation.length - 1;
 
             int lastAttribute;
-            if (strIndex != query.length - 1)
+            if (strIndex != query.size() - 1)
                 lastAttribute = lastIndex - 1;
             else
                 lastAttribute = lastIndex + 1;
@@ -189,7 +190,7 @@ public class InterpreterService {
 
             lastOp = tokenizedOperation[0];
             if (!Objects.equals(tokenizedOperation[0], "GET")) {
-                if (strIndex == query.length - 1) {
+                if (strIndex == query.size() - 1) {
                     return buildResponse(multimapToMap.convert(result), getRelationMap);
                 }
 

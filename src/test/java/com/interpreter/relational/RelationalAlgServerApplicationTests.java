@@ -4,15 +4,19 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Multimap;
 import com.interpreter.relational.dto.ResponseDataDto;
+import com.interpreter.relational.dto.TestDataDto;
 import com.interpreter.relational.service.InterpreterService;
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.util.ResourceUtils;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest(classes = RelationalAlgServerApplication.class)
 class RelationalAlgServerApplicationTests {
@@ -23,45 +27,76 @@ class RelationalAlgServerApplicationTests {
     @Autowired
     private ObjectMapper mapper;
 
-    private ResponseDataDto testLogic(String[] query) throws IOException {
-        String testPath = "classpath:testData.json";
+    private TestDataDto testLogic(List<String> query, String testName) throws IOException, JSONException {
+        String dataPath = "classpath:testData.json";
+        String resultPath = "classpath:testResult.json";
         Map<String, Set<Multimap<String, String>>> data = mapper
-                .readValue(ResourceUtils.getFile(testPath), new TypeReference<>() {});
+                .readValue(ResourceUtils.getFile(dataPath), new TypeReference<>() {});
+
+        Map<String, Set<Multimap<String, String>>> result = mapper
+                .readValue(ResourceUtils.getFile(resultPath), new TypeReference<>() {});
 
         ResponseDataDto dataDto = interpreterService.inputProcessing(query, data);
-        System.out.println(dataDto);
-        return dataDto;
+        String json = new JSONArray(result.get(testName).toString()).toString();
+        Set<Map<String, Collection<String>>> expected = mapper.readValue(json, new TypeReference<>() {});
+        return new TestDataDto(dataDto, expected);
     }
 
     @Test
-    void selectTest() throws IOException {
-        String[] query = new String[] {
-                "SELECT R1 WHERE name = \"andrew\""
-        };
+    void selectTest() throws IOException, JSONException {
+        List<String> query = new ArrayList<>(Arrays.asList(
+                "SELECT R1 WHERE R1.name = \"andrew\" AND NOT phone = ( 134122 + 1 / 2 )"
+        ));
 
-        ResponseDataDto dataDto = testLogic(query);
+        TestDataDto testDataDto = testLogic(query, "selectTest");
+        ResponseDataDto dataDto = testDataDto.getDataDto();
+        Set<Map<String, Collection<String>>> expected = testDataDto.getExpected();
+
+        assertEquals(expected, dataDto.getResult());
         assert !dataDto.getResult().isEmpty();
     }
 
     @Test
-    void unionTest() throws IOException {
-        String[] query = new String[] {
+    void unionTest() throws IOException, JSONException {
+        List<String> query = new ArrayList<>(Arrays.asList(
                 "UNION R1 AND R2"
-        };
+        ));
 
-        ResponseDataDto dataDto = testLogic(query);
+        TestDataDto testDataDto = testLogic(query, "unionTest");
+        ResponseDataDto dataDto = testDataDto.getDataDto();
+        Set<Map<String, Collection<String>>> expected = testDataDto.getExpected();
+
+        //assertEquals(expected, dataDto.getResult());
         assert !dataDto.getResult().isEmpty();
     }
 
     @Test
-    void intersectionAndProjectionTest() throws IOException {
-        String[] query = new String[] {
+    void intersectionAndProjectionTest() throws IOException, JSONException {
+        List<String> query = new ArrayList<>(Arrays.asList(
                 "PROJECT R1 OVER name -> T1",
                 "PROJECT R2 OVER name -> T2",
                 "INTERSECT T1 AND T2"
-        };
+        ));
 
-        ResponseDataDto dataDto = testLogic(query);
+        TestDataDto testDataDto = testLogic(query, "intersectionAndProjectionTest");
+        ResponseDataDto dataDto = testDataDto.getDataDto();
+        Set<Map<String, Collection<String>>> expected = testDataDto.getExpected();
+
+        //assertEquals(expected, dataDto.getResult());
+        assert !dataDto.getResult().isEmpty();
+    }
+
+    @Test
+    void differenceTest() throws IOException, JSONException {
+        List<String> query = new ArrayList<>(Arrays.asList(
+                "DIFFERENCE R1 AND R2"
+        ));
+
+        TestDataDto testDataDto = testLogic(query, "differenceTest");
+        ResponseDataDto dataDto = testDataDto.getDataDto();
+        Set<Map<String, Collection<String>>> expected = testDataDto.getExpected();
+
+        //assertEquals(expected, dataDto.getResult());
         assert !dataDto.getResult().isEmpty();
     }
 }

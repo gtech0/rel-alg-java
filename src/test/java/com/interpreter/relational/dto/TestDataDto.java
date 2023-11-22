@@ -4,17 +4,17 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class RequestTestDataDto {
+public class TestDataDto {
 
-    private List<String> query;
+    private ResponseDataDto dataDto;
 
-    private Map<String, Set<Map<String, String>>> relations;
+    private Set<Map<String, Collection<String>>> expected;
 
 }

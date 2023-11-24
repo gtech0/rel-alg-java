@@ -1,4 +1,4 @@
-package com.interpreter.relational.util;
+package com.interpreter.relational.util.converter;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;

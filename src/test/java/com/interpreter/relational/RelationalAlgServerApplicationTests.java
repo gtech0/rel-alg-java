@@ -66,7 +66,7 @@ class RelationalAlgServerApplicationTests {
         ResponseDataDto dataDto = testDataDto.getDataDto();
         Set<Map<String, Collection<String>>> expected = testDataDto.getExpected();
 
-        //assertEquals(expected, dataDto.getResult());
+        assertEquals(expected, dataDto.getResult());
         assert !dataDto.getResult().isEmpty();
     }
 
@@ -82,21 +82,23 @@ class RelationalAlgServerApplicationTests {
         ResponseDataDto dataDto = testDataDto.getDataDto();
         Set<Map<String, Collection<String>>> expected = testDataDto.getExpected();
 
-        //assertEquals(expected, dataDto.getResult());
+        assertEquals(expected, dataDto.getResult());
         assert !dataDto.getResult().isEmpty();
     }
 
     @Test
-    void differenceTest() throws IOException, JSONException {
+    void differenceAndProjectionTest() throws IOException, JSONException {
         List<String> query = new ArrayList<>(Arrays.asList(
-                "DIFFERENCE R1 AND R2"
+                "PROJECT R1 OVER phone -> T1",
+                "PROJECT R2 OVER phone -> T2",
+                "DIFFERENCE T1 AND T2"
         ));
 
-        TestDataDto testDataDto = testLogic(query, "differenceTest");
+        TestDataDto testDataDto = testLogic(query, "differenceAndProjectionTest");
         ResponseDataDto dataDto = testDataDto.getDataDto();
         Set<Map<String, Collection<String>>> expected = testDataDto.getExpected();
 
-        //assertEquals(expected, dataDto.getResult());
+        assertEquals(expected, dataDto.getResult());
         assert !dataDto.getResult().isEmpty();
     }
 }

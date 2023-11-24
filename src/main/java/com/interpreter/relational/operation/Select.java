@@ -8,8 +8,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.util.*;
 
 import static com.interpreter.relational.util.AttributeClass.extractAttribute;
-import static com.interpreter.relational.util.ComparatorMethods.*;
-import static com.interpreter.relational.util.ComparatorMethods.isANumber;
+import static com.interpreter.relational.util.comparator.ComparatorMethods.*;
+import static com.interpreter.relational.util.comparator.ComparatorMethods.isANumber;
 import static java.util.Map.entry;
 
 public class Select {
@@ -36,7 +36,7 @@ public class Select {
 
                         Collection<String> mapValues1 = map.get(attribute1);
                         Collection<String> mapValues2 = map.get(attribute2);
-                        attributeExist(token, map, mapValues1, mapValues2, notCheck, result, operand1, operand2);
+                        checkIfAttrAndCompare(token, map, mapValues1, mapValues2, notCheck, result, operand1, operand2);
                     }
                     results.push(result);
                 }
@@ -91,13 +91,13 @@ public class Select {
         }
     }
 
-    private static void attributeExist(String token,
-                                       Multimap<String, String> map,
-                                       Collection<String> mapValues2,
-                                       Collection<String> mapValues1,
-                                       boolean notCheck,
-                                       Set<Multimap<String, String>> result,
-                                       String operand2, String operand1
+    private static void checkIfAttrAndCompare(String token,
+                                              Multimap<String, String> map,
+                                              Collection<String> mapValues2,
+                                              Collection<String> mapValues1,
+                                              boolean notCheck,
+                                              Set<Multimap<String, String>> result,
+                                              String operand2, String operand1
     ) {
         if (!mapValues2.isEmpty() && !mapValues1.isEmpty()) {
             mapValues2.forEach(
@@ -124,16 +124,12 @@ public class Select {
     ) {
         List<String> comparatorTokens = List.of(">", "<", ">=", "<=", "=", "!=");
 
-        if (comparatorTokens.contains(token)) {
-            if (isANumber(value1) && isANumber(value2)) {
-                double currentVal = Double.parseDouble(value1);
-                double newVal = Double.parseDouble(value2);
-                if (isNumericComparator(token, notCheck, currentVal, newVal)) {
-                    result.add(map);
-                }
-            } else if (isEqualOrNotEqualString(token, notCheck, value1, value2)) {
+        if (comparatorTokens.contains(token)
+                && (numericComparator(token, notCheck, value1, value2)
+                || dateComparator(token, notCheck, value1, value2)
+                || isEqualOrNotEqualString(token, notCheck, value1, value2))
+        ) {
                 result.add(map);
-            }
         }
     }
 
@@ -159,10 +155,7 @@ public class Select {
         );
 
         for (String token : tokens) {
-            if (!(operators.containsKey(token)
-                    || Objects.equals(token, "(")
-                    || Objects.equals(token, ")"))
-            ) {
+            if (!operators.containsKey(token)) {
                 outputQueue.offer(token);
             } else if (Objects.equals(token, "(")) {
                 operatorStack.push(token);
@@ -175,7 +168,7 @@ public class Select {
                 if (!operatorStack.empty() && Objects.equals(operatorStack.peek(), "(")) {
                     operatorStack.pop();
                 }
-            } else if (operators.containsKey(token)) {
+            } else {
                 while (!operatorStack.empty()
                         && operators.get(token) <= operators.get(operatorStack.peek())
                         && !Objects.equals(operatorStack.peek(), "(")

@@ -4,7 +4,7 @@ import com.interpreter.relational.exception.BaseException;
 
 import java.util.List;
 
-import static com.interpreter.relational.util.ComparatorMethods.isANumber;
+import static com.interpreter.relational.util.comparator.ComparatorMethods.isANumber;
 
 public class AttributeClass {
     public static String extractAttribute(List<String> relationNames, String attribute) {

@@ -16,12 +16,132 @@
     }
   ],
   "unionTest": [
-
+    {
+      "name": [
+        "john"
+      ],
+      "phone": [
+        "754743"
+      ],
+      "group": [
+        "group3"
+      ],
+      "birthdate": [
+        "2000-02-01"
+      ]
+    },
+    {
+      "name": [
+        "alex"
+      ],
+      "phone": [
+        "133123"
+      ],
+      "group": [
+        "group2"
+      ],
+      "birthdate": [
+        "2000-01-04"
+      ]
+    },
+    {
+      "name": [
+        "andrew"
+      ],
+      "phone": [
+        "134123"
+      ],
+      "group": [
+        "group1"
+      ],
+      "birthdate": [
+        "1999-03-01"
+      ]
+    },
+    {
+      "name": [
+        "jim"
+      ],
+      "phone": [
+        "135121"
+      ],
+      "group": [
+        "group1"
+      ],
+      "birthdate": [
+        "2001-01-02"
+      ]
+    },
+    {
+      "name": [
+        "ash"
+      ],
+      "phone": [
+        "463732"
+      ],
+      "group": [
+        "group4"
+      ],
+      "birthdate": [
+        "2004-02-01"
+      ]
+    },
+    {
+      "name": [
+        "alex"
+      ],
+      "phone": [
+        "363632"
+      ],
+      "group": [
+        "group2"
+      ],
+      "birthdate": [
+        "2000-01-04"
+      ]
+    },
+    {
+      "name": [
+        "ald"
+      ],
+      "phone": [
+        "634636"
+      ],
+      "group": [
+        "group2"
+      ],
+      "birthdate": [
+        "2000-01-02"
+      ]
+    }
   ],
   "intersectionAndProjectionTest": [
-
+    {
+      "name": [
+        "alex"
+      ]
+    }
   ],
-  "differenceTest": [
-
+  "differenceAndProjectionTest": [
+    {
+      "phone": [
+        "133123"
+      ]
+    },
+    {
+      "phone": [
+        "754743"
+      ]
+    },
+    {
+      "phone": [
+        "135121"
+      ]
+    },
+    {
+      "phone": [
+        "134123"
+      ]
+    }
   ]
 }

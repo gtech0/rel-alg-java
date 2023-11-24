@@ -12,9 +12,9 @@ import com.interpreter.relational.operation.Select;
 import com.interpreter.relational.operation.Union;
 import com.interpreter.relational.repository.SolutionRepository;
 import com.interpreter.relational.repository.TestRepository;
-import com.interpreter.relational.util.GenericConverter;
-import com.interpreter.relational.util.MapToMultimapRelation;
-import com.interpreter.relational.util.MultimapToMapRelation;
+import com.interpreter.relational.util.converter.GenericConverter;
+import com.interpreter.relational.util.converter.MapToMultimapRelation;
+import com.interpreter.relational.util.converter.MultimapToMapRelation;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.springframework.stereotype.Service;
@@ -114,7 +114,7 @@ public class InterpreterService {
         query.removeIf(String::isBlank);
         checkQuery(query);
 
-        String lastOp = null;
+        String lastCommand = null;
         for (int strIndex = 0; strIndex < query.size(); strIndex++) {
             String queryIterator = query.get(strIndex);
             String[] tokenizedOperation = queryIterator.split("\\s+");
@@ -188,7 +188,7 @@ public class InterpreterService {
                 default -> throw new BaseException("Unexpected error");
             }
 
-            lastOp = tokenizedOperation[0];
+            lastCommand = tokenizedOperation[0];
             if (!Objects.equals(tokenizedOperation[0], "GET")) {
                 if (strIndex == query.size() - 1) {
                     return buildResponse(multimapToMap.convert(result), getRelationMap);
@@ -202,8 +202,9 @@ public class InterpreterService {
             }
         }
 
-        if (Objects.equals(lastOp, "GET")) {
-            return buildResponse(multimapToMap.convert(testRepository.getResult()), getRelationMap);
+        Set<Multimap<String, String>> output = testRepository.getResult();
+        if (Objects.equals(lastCommand, "GET")) {
+            return buildResponse(multimapToMap.convert(output), getRelationMap);
         }
 
         return new ResponseDataDto(new HashSet<>(), new HashMap<>());

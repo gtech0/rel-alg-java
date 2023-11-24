@@ -1,5 +1,7 @@
 package com.interpreter.relational.util.comparator;
 
+import com.interpreter.relational.dto.ComparatorParams;
+
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.Map;
@@ -24,22 +26,22 @@ public class ComparatorMethods {
                 && value.chars().filter(c -> c == '\"').count() == 2;
     }
 
-    public static boolean numericComparator(String token, boolean notCheck, String value1, String value2) {
-        if (!(isANumber(value1) && isANumber(value2))) {
+    public static boolean numericComparator(ComparatorParams params) {
+        if (!(isANumber(params.getOperandLeft()) && isANumber(params.getOperandRight()))) {
             return false;
         }
 
-        double currentVal = Double.parseDouble(value1);
-        double newVal = Double.parseDouble(value2);
+        double currentVal = Double.parseDouble(params.getOperandLeft());
+        double newVal = Double.parseDouble(params.getOperandRight());
 
         return NumericComparatorStrategy
-                .valueOf(operations.get(token))
-                .execute(notCheck, currentVal, newVal);
+                .valueOf(operations.get(params.getToken()))
+                .execute(currentVal, newVal);
     }
 
-    public static boolean dateComparator(String token, boolean notCheck, String value1, String value2) {
-        String currentStrVal = isQuoted(value1) ? removeQuotes(value1) : value1;
-        String newStrVal = isQuoted(value2) ? removeQuotes(value2) : value2;
+    public static boolean dateComparator(ComparatorParams params) {
+        String currentStrVal = isQuoted(params.getOperandLeft()) ? removeQuotes(params.getOperandLeft()) : params.getOperandLeft();
+        String newStrVal = isQuoted(params.getOperandRight()) ? removeQuotes(params.getOperandRight()) : params.getOperandRight();
 
         if (!(isADate(currentStrVal) && isADate(newStrVal))) {
             return false;
@@ -49,20 +51,15 @@ public class ComparatorMethods {
         LocalDate newVal = LocalDate.parse(newStrVal);
 
         return DateComparatorStrategy
-                .valueOf(operations.get(token))
-                .execute(notCheck, currentVal, newVal);
+                .valueOf(operations.get(params.getToken()))
+                .execute(currentVal, newVal);
     }
 
-    public static boolean isEqualOrNotEqualString(String token, boolean notCheck, String value1, String value2) {
-        String currentStrVal = isQuoted(value1) ? removeQuotes(value1) : value1;
-        String newStrVal = isQuoted(value2) ? removeQuotes(value2) : value2;
-        return (Objects.equals(token, "=")
-                && (Objects.equals(currentStrVal, newStrVal) && !notCheck
-                || !Objects.equals(currentStrVal, newStrVal) && notCheck))
-
-                || (Objects.equals(token, "!=")
-                && (!Objects.equals(currentStrVal, newStrVal) && !notCheck
-                || Objects.equals(currentStrVal, newStrVal) && notCheck));
+    public static boolean isEqualOrNotEqualString(ComparatorParams params) {
+        String currentStrVal = isQuoted(params.getOperandLeft()) ? removeQuotes(params.getOperandLeft()) : params.getOperandLeft();
+        String newStrVal = isQuoted(params.getOperandRight()) ? removeQuotes(params.getOperandRight()) : params.getOperandRight();
+        return ((Objects.equals(params.getToken(), "=") && Objects.equals(currentStrVal, newStrVal))
+                || (Objects.equals(params.getToken(), "!=") && !Objects.equals(currentStrVal, newStrVal)));
     }
 
     public static String removeQuotes(String value) {

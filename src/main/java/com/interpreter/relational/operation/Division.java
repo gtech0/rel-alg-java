@@ -11,7 +11,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.interpreter.relational.util.AttributeClass.extractAttribute;
+import static com.interpreter.relational.util.AttributeProcessor.extractAttribute;
 
 public class Division {
     public static Set<Multimap<String, String>> division(Pair<String, Set<Multimap<String, String>>> relation1,

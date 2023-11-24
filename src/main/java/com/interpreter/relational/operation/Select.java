@@ -2,12 +2,13 @@ package com.interpreter.relational.operation;
 
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
+import com.interpreter.relational.dto.ComparatorParams;
 import com.interpreter.relational.exception.BaseException;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
 
-import static com.interpreter.relational.util.AttributeClass.extractAttribute;
+import static com.interpreter.relational.util.AttributeProcessor.extractAttribute;
 import static com.interpreter.relational.util.comparator.ComparatorMethods.*;
 import static com.interpreter.relational.util.comparator.ComparatorMethods.isANumber;
 import static java.util.Map.entry;
@@ -18,43 +19,40 @@ public class Select {
         Queue<String> RPN = shuntingYard(tokens);
         String relationName = relation.getLeft();
         Stack<Object> results = new Stack<>();
+
         for (String token : RPN) {
-            boolean notCheck = false;
             Set<Multimap<String, String>> result = new HashSet<>();
             switch (token) {
                 case "=", "!=", ">", "<", ">=", "<=" -> {
-                    String operand1 = (String) results.pop();
+                    String operandRight = (String) results.pop();
                     if (Objects.equals(results.peek(), "NOT")) {
-                        notCheck = true;
+                        token = revertToken(token);
                         results.pop();
                     }
-                    String operand2 = (String) results.pop();
+                    String operandLeft = (String) results.pop();
 
-                    for (Multimap<String, String> map : relation.getRight()) {
-                        String attribute1 = extractAttribute(List.of(relationName), operand1);
-                        String attribute2 = extractAttribute(List.of(relationName), operand2);
-
-                        Collection<String> mapValues1 = map.get(attribute1);
-                        Collection<String> mapValues2 = map.get(attribute2);
-                        checkIfAttrAndCompare(token, map, mapValues1, mapValues2, notCheck, result, operand1, operand2);
-                    }
-                    results.push(result);
+                    ComparatorParams params = ComparatorParams.builder()
+                            .token(token)
+                            .operandLeft(operandLeft)
+                            .operandRight(operandRight)
+                            .build();
+                    compareOperands(relation, relationName, params, result, results);
                 }
                 case "+", "-", "*", "/" -> {
-                    String operand1 = (String) results.pop();
-                    String operand2 = (String) results.pop();
-                    simpleMathParser(token, operand1, operand2, results);
+                    String operandRight = (String) results.pop();
+                    String operandLeft = (String) results.pop();
+                    simpleMathParser(token, operandLeft, operandRight, results);
                 }
                 case "OR" -> {
-                    var operand1 = (Set<Multimap<String, String>>) results.pop();
-                    var operand2 = (Set<Multimap<String, String>>) results.pop();
-                    result = Sets.union(operand2, operand1);
+                    var operandRight = (Set<Multimap<String, String>>) results.pop();
+                    var operandLeft = (Set<Multimap<String, String>>) results.pop();
+                    result = Sets.union(operandLeft, operandRight);
                     results.push(result);
                 }
                 case "AND" -> {
-                    var operand1 = (Set<Multimap<String, String>>) results.pop();
-                    var operand2 = (Set<Multimap<String, String>>) results.pop();
-                    result = Sets.intersection(operand2, operand1);
+                    var operandRight = (Set<Multimap<String, String>>) results.pop();
+                    var operandLeft = (Set<Multimap<String, String>>) results.pop();
+                    result = Sets.intersection(operandLeft, operandRight);
                     results.push(result);
                 }
                 default -> results.push(token);
@@ -66,6 +64,37 @@ public class Select {
         }
 
         return (Set<Multimap<String, String>>) results.firstElement();
+    }
+
+    private static void compareOperands(Pair<String, Set<Multimap<String, String>>> relation,
+                                        String relationName,
+                                        ComparatorParams params,
+                                        Set<Multimap<String, String>> result,
+                                        Stack<Object> results
+    ) {
+        String attributeLeft = extractAttribute(List.of(relationName), params.getOperandLeft());
+        String attributeRight = extractAttribute(List.of(relationName), params.getOperandRight());
+
+        for (Multimap<String, String> map : relation.getRight()) {
+            Collection<String> valuesOfLeft = map.get(attributeLeft);
+            Collection<String> valuesOfRight = map.get(attributeRight);
+
+            checkIfAttributeAndCompare(map, valuesOfLeft, valuesOfRight, result, params);
+        }
+        results.push(result);
+    }
+
+    private static String revertToken(String token) {
+        Map<String, String> reversedTokens = Map.ofEntries(
+                entry("=", "!="),
+                entry("!=", "="),
+                entry(">", "<="),
+                entry("<", ">="),
+                entry(">=", "<"),
+                entry("<=", ">")
+        );
+
+        return reversedTokens.get(token);
     }
 
     private static void simpleMathParser(String token, String operand1, String operand2, Stack<Object> results) {
@@ -91,43 +120,45 @@ public class Select {
         }
     }
 
-    private static void checkIfAttrAndCompare(String token,
-                                              Multimap<String, String> map,
-                                              Collection<String> mapValues2,
-                                              Collection<String> mapValues1,
-                                              boolean notCheck,
-                                              Set<Multimap<String, String>> result,
-                                              String operand2, String operand1
+    private static void checkIfAttributeAndCompare(Multimap<String, String> map,
+                                                   Collection<String> valuesOfLeft,
+                                                   Collection<String> valuesOfRight,
+                                                   Set<Multimap<String, String>> result,
+                                                   ComparatorParams params
     ) {
-        if (!mapValues2.isEmpty() && !mapValues1.isEmpty()) {
-            mapValues2.forEach(
-                    value2 -> mapValues1.forEach(
-                            value1 -> valueComparator(token, map, value2, value1, notCheck, result)
+        if (!valuesOfLeft.isEmpty() && !valuesOfRight.isEmpty()) {
+            valuesOfLeft.forEach(
+                    valueLeft -> valuesOfRight.forEach(
+                            valueRight -> {
+                                params.setOperandLeft(valueLeft);
+                                params.setOperandRight(valueRight);
+                                valueComparator(map, params, result);
+                            }
                     )
             );
-        } else if (!mapValues2.isEmpty()) {
-            mapValues2.forEach(value2 -> valueComparator(token, map, value2, operand1, notCheck, result));
-        } else if (!mapValues1.isEmpty()) {
-            mapValues1.forEach(value1 -> valueComparator(token, map, operand2, value1, notCheck, result));
+        } else if (!valuesOfLeft.isEmpty()) {
+            valuesOfLeft.forEach(valueLeft -> {
+                params.setOperandLeft(valueLeft);
+                valueComparator(map, params, result);
+            });
+        } else if (!valuesOfRight.isEmpty()) {
+            valuesOfRight.forEach(valueRight -> {
+                params.setOperandRight(valueRight);
+                valueComparator(map, params, result);
+            });
         } else {
-            valueComparator(token, map, operand2, operand1, notCheck, result);
+            valueComparator(map, params, result);
         }
     }
 
-    private static void valueComparator(
-            String token,
-            Multimap<String, String> map,
-            String value2,
-            String value1,
-            boolean notCheck,
-            Set<Multimap<String, String>> result
+    private static void valueComparator(Multimap<String, String> map,
+                                        ComparatorParams params,
+                                        Set<Multimap<String, String>> result
     ) {
         List<String> comparatorTokens = List.of(">", "<", ">=", "<=", "=", "!=");
 
-        if (comparatorTokens.contains(token)
-                && (numericComparator(token, notCheck, value1, value2)
-                || dateComparator(token, notCheck, value1, value2)
-                || isEqualOrNotEqualString(token, notCheck, value1, value2))
+        if (comparatorTokens.contains(params.getToken())
+                && (numericComparator(params) || dateComparator(params) || isEqualOrNotEqualString(params))
         ) {
                 result.add(map);
         }

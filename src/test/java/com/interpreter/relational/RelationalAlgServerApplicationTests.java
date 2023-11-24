@@ -32,20 +32,21 @@ class RelationalAlgServerApplicationTests {
         String resultPath = "classpath:testResult.json";
         Map<String, Set<Multimap<String, String>>> data = mapper
                 .readValue(ResourceUtils.getFile(dataPath), new TypeReference<>() {});
-
         Map<String, Set<Multimap<String, String>>> result = mapper
                 .readValue(ResourceUtils.getFile(resultPath), new TypeReference<>() {});
 
         ResponseDataDto dataDto = interpreterService.inputProcessing(query, data);
+
         String json = new JSONArray(result.get(testName).toString()).toString();
         Set<Map<String, Collection<String>>> expected = mapper.readValue(json, new TypeReference<>() {});
+
         return new TestDataDto(dataDto, expected);
     }
 
     @Test
     void selectTest() throws IOException, JSONException {
         List<String> query = new ArrayList<>(Arrays.asList(
-                "SELECT R1 WHERE R1.name = \"andrew\" AND NOT phone = ( 134122 + 1 / 2 )"
+                "SELECT R1 WHERE R1.name = \"andrew\" AND NOT phone = ( 134122 + 1 / 2 ) AND R1.birthdate > \"1998-01-01\""
         ));
 
         TestDataDto testDataDto = testLogic(query, "selectTest");
@@ -95,6 +96,20 @@ class RelationalAlgServerApplicationTests {
         ));
 
         TestDataDto testDataDto = testLogic(query, "differenceAndProjectionTest");
+        ResponseDataDto dataDto = testDataDto.getDataDto();
+        Set<Map<String, Collection<String>>> expected = testDataDto.getExpected();
+
+        assertEquals(expected, dataDto.getResult());
+        assert !dataDto.getResult().isEmpty();
+    }
+
+    @Test
+    void joinTest() throws IOException, JSONException {
+        List<String> query = new ArrayList<>(Arrays.asList(
+                "JOIN R1 AND R2 OVER name"
+        ));
+
+        TestDataDto testDataDto = testLogic(query, "joinTest");
         ResponseDataDto dataDto = testDataDto.getDataDto();
         Set<Map<String, Collection<String>>> expected = testDataDto.getExpected();
 

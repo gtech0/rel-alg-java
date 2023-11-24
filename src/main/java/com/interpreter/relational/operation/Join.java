@@ -9,7 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static com.interpreter.relational.util.AttributeClass.extractAttribute;
+import static com.interpreter.relational.util.AttributeProcessor.extractAttribute;
 
 public class Join {
     public static Set<Multimap<String, String>> join(Pair<String, Set<Multimap<String, String>>> relation1,

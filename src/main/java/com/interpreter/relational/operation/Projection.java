@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.interpreter.relational.util.AttributeClass.extractAttribute;
+import static com.interpreter.relational.util.AttributeProcessor.extractAttribute;
 
 public class Projection {
     public static Set<Multimap<String, String>> projection(Pair<String, Set<Multimap<String, String>>> relation,

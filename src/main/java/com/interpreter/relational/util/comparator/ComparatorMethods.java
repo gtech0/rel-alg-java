@@ -40,6 +40,10 @@ public class ComparatorMethods {
     }
 
     public static boolean dateComparator(ComparatorParams params) {
+        if (!(isQuoted(params.getOperandLeft()) || isQuoted(params.getOperandRight()))) {
+            return false;
+        }
+
         String currentStrVal = isQuoted(params.getOperandLeft()) ? removeQuotes(params.getOperandLeft()) : params.getOperandLeft();
         String newStrVal = isQuoted(params.getOperandRight()) ? removeQuotes(params.getOperandRight()) : params.getOperandRight();
 
@@ -56,6 +60,10 @@ public class ComparatorMethods {
     }
 
     public static boolean isEqualOrNotEqualString(ComparatorParams params) {
+        if (!(isQuoted(params.getOperandLeft()) || isQuoted(params.getOperandRight()))) {
+            return false;
+        }
+
         String currentStrVal = isQuoted(params.getOperandLeft()) ? removeQuotes(params.getOperandLeft()) : params.getOperandLeft();
         String newStrVal = isQuoted(params.getOperandRight()) ? removeQuotes(params.getOperandRight()) : params.getOperandRight();
         return ((Objects.equals(params.getToken(), "=") && Objects.equals(currentStrVal, newStrVal))

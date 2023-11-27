@@ -92,7 +92,7 @@ public class InterpreterService {
 
             ++problemNum;
             if (!Objects.equals(solutionResult, result)) {
-                return new ResultDto("Test " + problemNum + " has failed");
+                throw new BaseException("Test " + problemNum + " has failed");
             }
         }
 
@@ -105,7 +105,7 @@ public class InterpreterService {
         testRepository.clear();
         testRepository.storeInMap(data);
         Map<String, Set<Multimap<String, String>>> relationMap = testRepository.findAll();
-        Map<String, Set<Map<String, Collection<String>>>> getRelationMap = new HashMap<>();
+        Map<String, Set<Map<String, Collection<String>>>> relationGetMap = new HashMap<>();
 
         if (query.isEmpty()) {
             return new ResponseDataDto(new HashSet<>(), new HashMap<>());
@@ -116,85 +116,62 @@ public class InterpreterService {
 
         String lastCommand = null;
         for (int strIndex = 0; strIndex < query.size(); strIndex++) {
-            String queryIterator = query.get(strIndex);
-            String[] tokenizedOperation = queryIterator.split("\\s+");
+            String queryOperation = query.get(strIndex);
+            String[] tokenizedOperation = queryOperation.split("\\s+");
 
+            String operationName = tokenizedOperation[0];
             int lastIndex = tokenizedOperation.length - 1;
-
             int lastAttribute;
-            if (strIndex != query.size() - 1)
+            boolean isLastOperation = Objects.equals(tokenizedOperation[lastIndex - 1], "->");
+            if (isLastOperation)
                 lastAttribute = lastIndex - 1;
             else
                 lastAttribute = lastIndex + 1;
 
             Set<Multimap<String, String>> result = new HashSet<>();
-            switch (tokenizedOperation[0]) {
-                case "UNION" -> result = Union.union(
-                        testRepository.getRelation(tokenizedOperation[1]),
-                        testRepository.getRelation(tokenizedOperation[3])
-                );
-                case "DIFFERENCE" -> result = Sets.difference(
-                        testRepository.getRelation(tokenizedOperation[1]),
-                        testRepository.getRelation(tokenizedOperation[3])
-                );
-                case "TIMES" -> result = CartesianProduct.product(
-                        testRepository.getRelation(tokenizedOperation[1]),
-                        testRepository.getRelation(tokenizedOperation[3])
-                );
-                case "INTERSECT" -> result = Sets.intersection(
-                        testRepository.getRelation(tokenizedOperation[1]),
-                        testRepository.getRelation(tokenizedOperation[3])
-                );
-                case "PROJECT" -> {
-                    String relationName = tokenizedOperation[1];
 
-                    result = projection(
-                            new ImmutablePair<>(relationName, testRepository.getRelation(relationName)),
-                            Arrays.stream(Arrays.copyOfRange(tokenizedOperation, 3, lastAttribute)).toList()
-                    );
-                }
-                case "SELECT" -> {
-                    String relationName = tokenizedOperation[1];
+            String firstRelationName = tokenizedOperation[1];
+            Set<Multimap<String, String>> firstRelation = testRepository.getRelation(firstRelationName);
 
-                    result = Select.selection(
-                            new ImmutablePair<>(relationName, testRepository.getRelation(relationName)),
-                            Arrays.stream(Arrays.copyOfRange(tokenizedOperation, 3, lastAttribute)).toList()
-                    );
-                }
-                case "DIVIDE" -> {
-                    String relName1 = tokenizedOperation[1];
-                    String relName2 = tokenizedOperation[3];
+            String secondRelationName = null;
+            if (tokenizedOperation.length > 3) {
+                secondRelationName = tokenizedOperation[3];
+            }
 
-                    result = division(
-                            new ImmutablePair<>(relName1, testRepository.getRelation(relName1)),
-                            new ImmutablePair<>(relName2, testRepository.getRelation(relName2)),
-                            Arrays.stream(Arrays.copyOfRange(tokenizedOperation, 5, lastAttribute)).toList()
-                    );
-                }
-                case "JOIN" -> {
-                    String relName1 = tokenizedOperation[1];
-                    String relName2 = tokenizedOperation[3];
-
-                    result = Join.join(
-                            new ImmutablePair<>(relName1, testRepository.getRelation(relName1)),
-                            new ImmutablePair<>(relName2, testRepository.getRelation(relName2)),
-                            Arrays.stream(Arrays.copyOfRange(tokenizedOperation, 5, lastAttribute)).toList()
-                    );
-                }
-                case "GET" -> getRelationMap.put(
-                        tokenizedOperation[1],
-                        multimapToMap.convert(testRepository.getRelation(tokenizedOperation[1]))
+            switch (operationName) {
+                case "UNION" -> result = Union.union(firstRelation, testRepository.getRelation(secondRelationName));
+                case "DIFFERENCE" -> result = Sets.difference(firstRelation, testRepository.getRelation(secondRelationName));
+                case "TIMES" -> result = CartesianProduct.product(firstRelation, testRepository.getRelation(secondRelationName));
+                case "INTERSECT" -> result = Sets.intersection(firstRelation, testRepository.getRelation(secondRelationName));
+                case "PROJECT" -> result = projection(
+                        new ImmutablePair<>(firstRelationName, firstRelation),
+                        Arrays.stream(Arrays.copyOfRange(tokenizedOperation, 3, lastAttribute)).toList()
                 );
+                case "SELECT" -> result = Select.selection(
+                        new ImmutablePair<>(firstRelationName, firstRelation),
+                        Arrays.stream(Arrays.copyOfRange(tokenizedOperation, 3, lastAttribute)).toList()
+                );
+                case "DIVIDE" -> result = division(
+                        new ImmutablePair<>(firstRelationName, firstRelation),
+                        new ImmutablePair<>(secondRelationName, testRepository.getRelation(secondRelationName)),
+                        Arrays.stream(Arrays.copyOfRange(tokenizedOperation, 5, lastAttribute)).toList()
+                );
+                case "JOIN" -> result = Join.join(
+                        new ImmutablePair<>(firstRelationName, firstRelation),
+                        new ImmutablePair<>(secondRelationName, testRepository.getRelation(secondRelationName)),
+                        Arrays.stream(Arrays.copyOfRange(tokenizedOperation, 5, lastAttribute)).toList()
+                );
+                case "GET" -> relationGetMap.put(firstRelationName, multimapToMap.convert(firstRelation));
                 default -> throw new BaseException("Unexpected error");
             }
 
-            lastCommand = tokenizedOperation[0];
-            if (!Objects.equals(tokenizedOperation[0], "GET")) {
+            lastCommand = operationName;
+            if (!Objects.equals(operationName, "GET")) {
                 if (strIndex == query.size() - 1) {
-                    return buildResponse(multimapToMap.convert(result), getRelationMap);
+                    return buildResponse(multimapToMap.convert(result), relationGetMap);
                 }
 
-                if (Objects.equals(tokenizedOperation[lastIndex - 1], "->")) {
+                if (isLastOperation) {
                     relationMap.put(tokenizedOperation[lastIndex], result);
                 } else {
                     relationMap.put("", result);
@@ -204,7 +181,7 @@ public class InterpreterService {
 
         Set<Multimap<String, String>> output = testRepository.getResult();
         if (Objects.equals(lastCommand, "GET")) {
-            return buildResponse(multimapToMap.convert(output), getRelationMap);
+            return buildResponse(multimapToMap.convert(output), relationGetMap);
         }
 
         return new ResponseDataDto(new HashSet<>(), new HashMap<>());

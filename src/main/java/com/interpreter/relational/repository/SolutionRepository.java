@@ -59,8 +59,8 @@ public class SolutionRepository {
 
     public void initialize() throws IOException {
         String resultPath = "classpath:solutionResult.json";
-        String relationPath = "classpath:solutionResult.json";
-        String problemPath = "classpath:solutionResult.json";
+        String relationPath = "classpath:solutionRelations.json";
+        String problemPath = "classpath:problem.json";
 
         Map<String, Set<Multimap<String, String>>> solutionResult = mapper
                 .readValue(ResourceUtils.getFile(resultPath), new TypeReference<>() {});

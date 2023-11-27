@@ -5,7 +5,6 @@ import com.interpreter.relational.exception.BaseException;
 import org.springframework.stereotype.Repository;
 
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -27,11 +26,7 @@ public class TestRepository {
                 ((TreeMap<String, Set<Multimap<String, String>>>) relationMap)
                 .firstEntry();
 
-        if (Objects.equals(result.getKey(), "")) {
-            return result.getValue();
-        } else {
-            throw new BaseException("Unexpected error");
-        }
+        return result.getValue();
     }
 
     public Set<Multimap<String, String>> getRelation(String key) {

@@ -10,7 +10,7 @@ import java.util.*;
 
 import static com.interpreter.relational.util.AttributeProcessor.extractAttribute;
 import static com.interpreter.relational.util.comparator.ComparatorMethods.*;
-import static com.interpreter.relational.util.comparator.ComparatorMethods.isANumber;
+import static com.interpreter.relational.util.UtilityMethods.*;
 import static java.util.Map.entry;
 
 public class Select {
@@ -76,48 +76,20 @@ public class Select {
         String attributeRight = extractAttribute(List.of(relationName), params.getOperandRight());
 
         for (Multimap<String, String> map : relation.getRight()) {
+            if (!isQuoted(attributeLeft) && !map.asMap().containsKey(attributeLeft)) {
+                 throw new BaseException("Attribute " + attributeLeft + " doesn't exist");
+            }
+
+            if (!isQuoted(attributeRight) && !map.asMap().containsKey(attributeRight)) {
+                throw new BaseException("Attribute " + attributeRight + " doesn't exist");
+            }
+
             Collection<String> valuesOfLeft = map.get(attributeLeft);
             Collection<String> valuesOfRight = map.get(attributeRight);
 
             checkIfAttributeAndCompare(map, valuesOfLeft, valuesOfRight, result, params);
         }
         results.push(result);
-    }
-
-    private static String revertToken(String token) {
-        Map<String, String> reversedTokens = Map.ofEntries(
-                entry("=", "!="),
-                entry("!=", "="),
-                entry(">", "<="),
-                entry("<", ">="),
-                entry(">=", "<"),
-                entry("<=", ">")
-        );
-
-        return reversedTokens.get(token);
-    }
-
-    private static void simpleMathParser(String token, String operand1, String operand2, Stack<Object> results) {
-        if (isANumber(operand1) && isANumber(operand2)) {
-            double val1 = Double.parseDouble(operand1);
-            double val2 = Double.parseDouble(operand2);
-            switch (token) {
-                case "+":
-                    results.push(Double.toString(val2 + val1));
-                    break;
-                case "-":
-                    results.push(Double.toString(val2 - val1));
-                    break;
-                case "*":
-                    results.push(Double.toString(val2 * val1));
-                    break;
-                case "/":
-                    results.push(Double.toString(val2 / val1));
-                    break;
-            }
-        } else {
-            throw new BaseException("Incorrect mathematical expression");
-        }
     }
 
     private static void checkIfAttributeAndCompare(Multimap<String, String> map,
@@ -160,7 +132,43 @@ public class Select {
         if (comparatorTokens.contains(params.getToken())
                 && (numericComparator(params) || dateComparator(params) || isEqualOrNotEqualString(params))
         ) {
-                result.add(map);
+            result.add(map);
+        }
+    }
+
+    private static String revertToken(String token) {
+        Map<String, String> reversedTokens = Map.ofEntries(
+                entry("=", "!="),
+                entry("!=", "="),
+                entry(">", "<="),
+                entry("<", ">="),
+                entry(">=", "<"),
+                entry("<=", ">")
+        );
+
+        return reversedTokens.get(token);
+    }
+
+    private static void simpleMathParser(String token, String operand1, String operand2, Stack<Object> results) {
+        if (isANumber(operand1) && isANumber(operand2)) {
+            double val1 = Double.parseDouble(operand1);
+            double val2 = Double.parseDouble(operand2);
+            switch (token) {
+                case "+":
+                    results.push(Double.toString(val2 + val1));
+                    break;
+                case "-":
+                    results.push(Double.toString(val2 - val1));
+                    break;
+                case "*":
+                    results.push(Double.toString(val2 * val1));
+                    break;
+                case "/":
+                    results.push(Double.toString(val2 / val1));
+                    break;
+            }
+        } else {
+            throw new BaseException("Incorrect mathematical expression");
         }
     }
 

@@ -4,15 +4,16 @@ import com.interpreter.relational.exception.BaseException;
 
 import java.util.List;
 
+import static com.interpreter.relational.util.UtilityMethods.*;
 import static com.interpreter.relational.util.comparator.ComparatorMethods.isANumber;
 
 public class AttributeProcessor {
     public static String extractAttribute(List<String> relationNames, String attribute) {
         String finalAttribute = attribute;
-        if (attribute.contains(".") && !isANumber(attribute)) {
+        if (attribute.contains(".") && !isANumber(attribute) && !isQuoted(attribute)) {
             String[] relationAttribute = attribute.split("\\.");
             if (!attributeOfRelationExists(relationNames, relationAttribute)) {
-                throw new BaseException("Relation " + relationAttribute[0] + " doesn't exist");
+                throw new BaseException("Relation " + relationAttribute[0] + " doesn't exist in this context");
             }
             finalAttribute = relationAttribute[1];
         }

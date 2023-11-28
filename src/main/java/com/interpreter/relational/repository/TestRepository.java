@@ -4,14 +4,14 @@ import com.google.common.collect.Multimap;
 import com.interpreter.relational.exception.BaseException;
 import org.springframework.stereotype.Repository;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
 @Repository
 public class TestRepository {
 
-    Map<String, Set<Multimap<String, String>>> relationMap = new TreeMap<>();
+    Map<String, Set<Multimap<String, String>>> relationMap = new HashMap<>();
 
     public void storeInMap(Map<String, Set<Multimap<String, String>>> newMap) {
         relationMap.putAll(newMap);
@@ -22,11 +22,13 @@ public class TestRepository {
     }
 
     public Set<Multimap<String, String>> getResult() {
-        Map.Entry<String, Set<Multimap<String, String>>> result =
-                ((TreeMap<String, Set<Multimap<String, String>>>) relationMap)
-                .firstEntry();
+        Set<Multimap<String, String>> result = relationMap.get("");
 
-        return result.getValue();
+        if (result != null) {
+            return result;
+        } else {
+            throw new BaseException("Result is null");
+        }
     }
 
     public Set<Multimap<String, String>> getRelation(String key) {

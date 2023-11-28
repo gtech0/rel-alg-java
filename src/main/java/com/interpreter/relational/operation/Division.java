@@ -29,7 +29,7 @@ public class Division {
                 String finalAttribute = extractAttribute(relationNames, attribute);
                 if (!multimap.containsKey(finalAttribute)) {
                     throw new BaseException("Attribute " + finalAttribute +
-                            " of relation " + relationNames + " doesn't exist");
+                            " of relations " + relationNames + " doesn't exist");
                 }
             }
         }

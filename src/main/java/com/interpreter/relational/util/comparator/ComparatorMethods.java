@@ -7,6 +7,7 @@ import java.time.format.DateTimeParseException;
 import java.util.Map;
 import java.util.Objects;
 
+import static com.interpreter.relational.util.UtilityMethods.*;
 import static java.util.Map.entry;
 
 public class ComparatorMethods {
@@ -20,10 +21,8 @@ public class ComparatorMethods {
             entry(">", "greaterThan")
     );
 
-    public static boolean isQuoted(String value) {
-        return value.startsWith("\"")
-                && value.endsWith("\"")
-                && value.chars().filter(c -> c == '\"').count() == 2;
+    public static String removeQuotes(String value) {
+        return value.replaceAll("\"", "");
     }
 
     public static boolean numericComparator(ComparatorParams params) {
@@ -40,10 +39,6 @@ public class ComparatorMethods {
     }
 
     public static boolean dateComparator(ComparatorParams params) {
-        if (!(isQuoted(params.getOperandLeft()) || isQuoted(params.getOperandRight()))) {
-            return false;
-        }
-
         String currentStrVal = isQuoted(params.getOperandLeft()) ? removeQuotes(params.getOperandLeft()) : params.getOperandLeft();
         String newStrVal = isQuoted(params.getOperandRight()) ? removeQuotes(params.getOperandRight()) : params.getOperandRight();
 
@@ -60,18 +55,10 @@ public class ComparatorMethods {
     }
 
     public static boolean isEqualOrNotEqualString(ComparatorParams params) {
-        if (!(isQuoted(params.getOperandLeft()) || isQuoted(params.getOperandRight()))) {
-            return false;
-        }
-
         String currentStrVal = isQuoted(params.getOperandLeft()) ? removeQuotes(params.getOperandLeft()) : params.getOperandLeft();
         String newStrVal = isQuoted(params.getOperandRight()) ? removeQuotes(params.getOperandRight()) : params.getOperandRight();
         return ((Objects.equals(params.getToken(), "=") && Objects.equals(currentStrVal, newStrVal))
                 || (Objects.equals(params.getToken(), "!=") && !Objects.equals(currentStrVal, newStrVal)));
-    }
-
-    public static String removeQuotes(String value) {
-        return value.replaceAll("\"", "");
     }
 
     public static boolean isANumber(String value) {

@@ -30,7 +30,7 @@ public class Join {
                     String finalAttribute = extractAttribute(relationNames, attribute);
                     if (!multimap.containsKey(finalAttribute)) {
                         throw new BaseException("Attribute " + finalAttribute +
-                                " of relation " + relationNames + " doesn't exist");
+                                " of relations " + relationNames + " doesn't exist");
                     }
 
                     Collection<String> content = multimap.get(finalAttribute);

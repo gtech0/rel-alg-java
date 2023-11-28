@@ -11,7 +11,8 @@ public enum PatternEnum {
     INTERSECT("INTERSECT\\s+.*AND\\s+.*"),
     DIVIDE("DIVIDE\\s+.*BY\\s+.*OVER\\s+.*"),
     JOIN("JOIN\\s+.*AND\\s+.*OVER\\s+.*"),
-    GET("GET\\s+.*");
+    GET("GET\\s+.*"),
+    ANSWER("ANSWER\\s+.*");
 
     private final String pattern;
 

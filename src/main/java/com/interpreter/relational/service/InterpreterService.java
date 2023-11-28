@@ -114,19 +114,15 @@ public class InterpreterService {
         query.removeIf(String::isBlank);
         checkQuery(query);
 
-        String lastCommand = null;
-        for (int strIndex = 0; strIndex < query.size(); strIndex++) {
-            String queryOperation = query.get(strIndex);
+        for (String queryOperation : query) {
             String[] tokenizedOperation = queryOperation.split("\\s+");
 
             String operationName = tokenizedOperation[0];
             int lastIndex = tokenizedOperation.length - 1;
-            int lastAttribute;
-            boolean isLastOperation = Objects.equals(tokenizedOperation[lastIndex - 1], "->");
-            if (isLastOperation)
-                lastAttribute = lastIndex - 1;
-            else
-                lastAttribute = lastIndex + 1;
+            int lastAttribute = lastIndex - 1;
+            boolean hasArrow = Objects.equals(tokenizedOperation[lastIndex - 1], "->");
+            if (!hasArrow && !Objects.equals(operationName, "GET") && !Objects.equals(operationName, "ANSWER"))
+                continue;
 
             Set<Multimap<String, String>> result = new HashSet<>();
 
@@ -140,9 +136,12 @@ public class InterpreterService {
 
             switch (operationName) {
                 case "UNION" -> result = Union.union(firstRelation, testRepository.getRelation(secondRelationName));
-                case "DIFFERENCE" -> result = Sets.difference(firstRelation, testRepository.getRelation(secondRelationName));
-                case "TIMES" -> result = CartesianProduct.product(firstRelation, testRepository.getRelation(secondRelationName));
-                case "INTERSECT" -> result = Sets.intersection(firstRelation, testRepository.getRelation(secondRelationName));
+                case "DIFFERENCE" ->
+                        result = Sets.difference(firstRelation, testRepository.getRelation(secondRelationName));
+                case "TIMES" ->
+                        result = CartesianProduct.product(firstRelation, testRepository.getRelation(secondRelationName));
+                case "INTERSECT" ->
+                        result = Sets.intersection(firstRelation, testRepository.getRelation(secondRelationName));
                 case "PROJECT" -> result = projection(
                         new ImmutablePair<>(firstRelationName, firstRelation),
                         Arrays.stream(Arrays.copyOfRange(tokenizedOperation, 3, lastAttribute)).toList()
@@ -162,28 +161,16 @@ public class InterpreterService {
                         Arrays.stream(Arrays.copyOfRange(tokenizedOperation, 5, lastAttribute)).toList()
                 );
                 case "GET" -> relationGetMap.put(firstRelationName, multimapToMap.convert(firstRelation));
+                case "ANSWER" -> relationMap.put("", firstRelation);
                 default -> throw new BaseException("Unexpected error");
             }
 
-            lastCommand = operationName;
-            if (!Objects.equals(operationName, "GET")) {
-                if (strIndex == query.size() - 1) {
-                    return buildResponse(multimapToMap.convert(result), relationGetMap);
-                }
-
-                if (isLastOperation) {
-                    relationMap.put(tokenizedOperation[lastIndex], result);
-                } else {
-                    relationMap.put("", result);
-                }
+            if (!Objects.equals(operationName, "GET") && !Objects.equals(operationName, "ANSWER")) {
+                relationMap.put(tokenizedOperation[lastIndex], result);
             }
         }
 
         Set<Multimap<String, String>> output = testRepository.getResult();
-        if (Objects.equals(lastCommand, "GET")) {
-            return buildResponse(multimapToMap.convert(output), relationGetMap);
-        }
-
-        return new ResponseDataDto(new HashSet<>(), new HashMap<>());
+        return buildResponse(multimapToMap.convert(output), relationGetMap);
     }
 }

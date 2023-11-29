@@ -3,6 +3,7 @@ package com.interpreter.relational.operation;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.interpreter.relational.exception.BaseException;
+import com.interpreter.relational.exception.StatusType;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -28,8 +29,8 @@ public class Division {
             for (String attribute : commonAttributes) {
                 String finalAttribute = extractAttribute(relationNames, attribute);
                 if (!multimap.containsKey(finalAttribute)) {
-                    throw new BaseException("Attribute " + finalAttribute +
-                            " of relations " + relationNames + " doesn't exist");
+                    throw new BaseException("Attribute " + finalAttribute + " of relations "
+                            + relationNames + " doesn't exist", StatusType.CE.toString());
                 }
             }
         }

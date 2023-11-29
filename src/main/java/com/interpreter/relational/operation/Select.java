@@ -4,6 +4,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.interpreter.relational.dto.ComparatorParams;
 import com.interpreter.relational.exception.BaseException;
+import com.interpreter.relational.exception.StatusType;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
@@ -74,22 +75,24 @@ public class Select {
     ) {
         String attributeLeft = extractAttribute(List.of(relationName), params.getOperandLeft());
         String attributeRight = extractAttribute(List.of(relationName), params.getOperandRight());
-
+        List<String> attributes = List.of(attributeLeft, attributeRight);
         for (Multimap<String, String> map : relation.getRight()) {
-            if (!isQuoted(attributeLeft) && !map.asMap().containsKey(attributeLeft)) {
-                 throw new BaseException("Attribute " + attributeLeft + " doesn't exist");
-            }
-
-            if (!isQuoted(attributeRight) && !map.asMap().containsKey(attributeRight)) {
-                throw new BaseException("Attribute " + attributeRight + " doesn't exist");
+            for (String attribute : attributes) {
+                if (incorrectAttribute(map, attribute)) {
+                    throw new BaseException("Attribute " + attribute + " of relation "
+                            + relationName + " doesn't exist", StatusType.CE.toString());
+                }
             }
 
             Collection<String> valuesOfLeft = map.get(attributeLeft);
             Collection<String> valuesOfRight = map.get(attributeRight);
-
             checkIfAttributeAndCompare(map, valuesOfLeft, valuesOfRight, result, params);
         }
         results.push(result);
+    }
+
+    private static boolean incorrectAttribute(Multimap<String, String> map, String attributeRight) {
+        return !isQuoted(attributeRight) && !map.asMap().containsKey(attributeRight);
     }
 
     private static void checkIfAttributeAndCompare(Multimap<String, String> map,
@@ -168,7 +171,7 @@ public class Select {
                     break;
             }
         } else {
-            throw new BaseException("Incorrect mathematical expression");
+            throw new BaseException("Incorrect mathematical expression", StatusType.CE.toString());
         }
     }
 
@@ -220,7 +223,7 @@ public class Select {
 
         while (!operatorStack.empty()) {
             if (Objects.equals(operatorStack.peek(), "("))
-                throw new BaseException("Invalid expression");
+                throw new BaseException("Invalid expression", StatusType.CE.toString());
             outputQueue.offer(operatorStack.pop());
         }
 

@@ -6,6 +6,7 @@ import com.google.common.collect.Sets;
 import com.interpreter.relational.dto.ResponseDataDto;
 import com.interpreter.relational.dto.ResultDto;
 import com.interpreter.relational.exception.BaseException;
+import com.interpreter.relational.exception.StatusType;
 import com.interpreter.relational.operation.CartesianProduct;
 import com.interpreter.relational.operation.Join;
 import com.interpreter.relational.operation.Select;
@@ -45,7 +46,7 @@ public class InterpreterService {
             }
 
             if (index == null) {
-                throw new BaseException("No matching in line " + (i + 1));
+                throw new BaseException("No matching in line " + (i + 1), StatusType.CE.toString());
             }
         }
     }
@@ -92,7 +93,7 @@ public class InterpreterService {
 
             ++problemNum;
             if (!Objects.equals(solutionResult, result)) {
-                throw new BaseException("Test " + problemNum + " has failed");
+                throw new BaseException("Test " + problemNum + " has failed", StatusType.WA.toString());
             }
         }
 
@@ -162,7 +163,7 @@ public class InterpreterService {
                 );
                 case "GET" -> relationGetMap.put(firstRelationName, multimapToMap.convert(firstRelation));
                 case "ANSWER" -> relationMap.put("", firstRelation);
-                default -> throw new BaseException("Unexpected error");
+                default -> throw new BaseException("Unexpected error", StatusType.RT.toString());
             }
 
             if (!Objects.equals(operationName, "GET") && !Objects.equals(operationName, "ANSWER")) {

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.interpreter.relational.exception.BaseException;
+import com.interpreter.relational.exception.StatusType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.ResourceUtils;
@@ -39,21 +40,21 @@ public class SolutionRepository {
     public Set<Multimap<String, String>> getSolutionResult(String key) {
         Set<Multimap<String, String>> relation = solutionResult.get(key);
         if (relation == null)
-            throw new BaseException("Relation " + key + " is null");
+            throw new BaseException("Relation " + key + " is null", StatusType.CE.toString());
         return relation;
     }
 
     public Map<String, Set<Multimap<String, String>>> getSolutionRelations(String key) {
         Map<String, Set<Multimap<String, String>>> relation = solutionRelations.get(key);
         if (relation == null)
-            throw new BaseException("Relation " + key + " is null");
+            throw new BaseException("Relation " + key + " is null", StatusType.CE.toString());
         return relation;
     }
 
     public Collection<String> getProblemCollection(String key) {
         Collection<String> problemCollection = problem.get(key);
         if (problemCollection.isEmpty())
-            throw new BaseException("No " + key + " problem exist");
+            throw new BaseException("No " + key + " problem exist", StatusType.CE.toString());
         return problem.get(key);
     }
 

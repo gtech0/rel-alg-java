@@ -2,6 +2,7 @@ package com.interpreter.relational.operation;
 
 import com.google.common.collect.Multimap;
 import com.interpreter.relational.exception.BaseException;
+import com.interpreter.relational.exception.StatusType;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.Collection;
@@ -29,8 +30,8 @@ public class Join {
                 for (String attribute : uniqueAttributes) {
                     String finalAttribute = extractAttribute(relationNames, attribute);
                     if (!multimap.containsKey(finalAttribute)) {
-                        throw new BaseException("Attribute " + finalAttribute +
-                                " of relations " + relationNames + " doesn't exist");
+                        throw new BaseException("Attribute " + finalAttribute + " of relations "
+                                + relationNames + " doesn't exist", StatusType.CE.toString());
                     }
 
                     Collection<String> content = multimap.get(finalAttribute);

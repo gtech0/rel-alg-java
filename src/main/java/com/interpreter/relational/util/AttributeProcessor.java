@@ -1,6 +1,7 @@
 package com.interpreter.relational.util;
 
 import com.interpreter.relational.exception.BaseException;
+import com.interpreter.relational.exception.StatusType;
 
 import java.util.List;
 
@@ -13,7 +14,8 @@ public class AttributeProcessor {
         if (attribute.contains(".") && !isANumber(attribute) && !isQuoted(attribute)) {
             String[] relationAttribute = attribute.split("\\.");
             if (!attributeOfRelationExists(relationNames, relationAttribute)) {
-                throw new BaseException("Relation " + relationAttribute[0] + " doesn't exist in this context");
+                throw new BaseException("Relation " + relationAttribute[0] + " doesn't exist in this context",
+                        StatusType.CE.toString());
             }
             finalAttribute = relationAttribute[1];
         }

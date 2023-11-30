@@ -1,6 +1,5 @@
 package com.interpreter.relational.service;
 
-import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.interpreter.relational.dto.ResponseDataDto;
@@ -13,9 +12,6 @@ import com.interpreter.relational.operation.Select;
 import com.interpreter.relational.operation.Union;
 import com.interpreter.relational.repository.SolutionRepository;
 import com.interpreter.relational.repository.TestRepository;
-import com.interpreter.relational.util.converter.GenericConverter;
-import com.interpreter.relational.util.converter.MapToMultimapRelation;
-import com.interpreter.relational.util.converter.MultimapToMapRelation;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.springframework.stereotype.Service;
@@ -31,10 +27,6 @@ import static com.interpreter.relational.operation.Projection.projection;
 public class InterpreterService {
     private final TestRepository testRepository;
     private final SolutionRepository solutionRepository;
-    GenericConverter<Set<Map<String, Collection<String>>>, Set<Multimap<String, String>>> mapToMultimap
-            = new MapToMultimapRelation();
-    GenericConverter<Set<Multimap<String, String>>, Set<Map<String, Collection<String>>>> multimapToMap
-            = new MultimapToMapRelation();
 
     public void checkQuery(List<String> query) {
         for (int i = 0; i < query.size(); i++) {
@@ -51,26 +43,8 @@ public class InterpreterService {
         }
     }
 
-    public Map<String, Set<Multimap<String, String>>> inputConversion(Map<String, Set<Map<String, String>>> input) {
-        Map<String, Set<Multimap<String, String>>> data = new HashMap<>();
-        input.forEach(
-                (k, v) -> {
-                    Set<Multimap<String, String>> newSet = new HashSet<>();
-                    v.forEach(
-                            map -> {
-                                Multimap<String, String> newMultimap = ArrayListMultimap.create();
-                                map.forEach(newMultimap::put);
-                                newSet.add(newMultimap);
-                            }
-                    );
-                    data.put(k, newSet);
-                }
-        );
-        return data;
-    }
-
-    public ResponseDataDto buildResponse(Set<Map<String, Collection<String>>> result,
-                                         Map<String, Set<Map<String, Collection<String>>>> getRelationMap) {
+    public ResponseDataDto buildResponse(Set<Multimap<String, String>> result,
+                                         Map<String, Set<Multimap<String, String>>> getRelationMap) {
         return ResponseDataDto.builder()
                 .result(result)
                 .getResults(getRelationMap)
@@ -80,16 +54,13 @@ public class InterpreterService {
     public ResultDto validation(List<String> query, String problemName) throws IOException {
         solutionRepository.initialize();
         Collection<String> problemCollection = solutionRepository.getProblemCollection(problemName);
+
         int problemNum = 0;
-
         for (String problem : problemCollection) {
-            Map<String, Set<Multimap<String, String>>> solutionRelations = solutionRepository
-                    .getSolutionRelations(problem);
-
-            Set<Map<String, Collection<String>>> executionResult = inputProcessing(query, solutionRelations).getResult();
-            Set<Multimap<String, String>> result = mapToMultimap.convert(executionResult);
-
+            var solutionRelations = solutionRepository.getSolutionRelations(problem);
             Set<Multimap<String, String>> solutionResult = solutionRepository.getSolutionResult(problem);
+
+            Set<Multimap<String, String>> result = inputProcessing(query, solutionRelations).getResult();
 
             ++problemNum;
             if (!Objects.equals(solutionResult, result)) {
@@ -106,10 +77,10 @@ public class InterpreterService {
         testRepository.clear();
         testRepository.storeInMap(data);
         Map<String, Set<Multimap<String, String>>> relationMap = testRepository.findAll();
-        Map<String, Set<Map<String, Collection<String>>>> relationGetMap = new HashMap<>();
+        Map<String, Set<Multimap<String, String>>> relationGetMap = new HashMap<>();
 
         if (query.isEmpty()) {
-            return new ResponseDataDto(new HashSet<>(), new HashMap<>());
+            return buildResponse(new HashSet<>(), new HashMap<>());
         }
 
         query.removeIf(String::isBlank);
@@ -122,8 +93,6 @@ public class InterpreterService {
             int lastIndex = tokenizedOperation.length - 1;
             int lastAttribute = lastIndex - 1;
             boolean hasArrow = Objects.equals(tokenizedOperation[lastIndex - 1], "->");
-            if (!hasArrow && !Objects.equals(operationName, "GET") && !Objects.equals(operationName, "ANSWER"))
-                continue;
 
             Set<Multimap<String, String>> result = new HashSet<>();
 
@@ -161,17 +130,17 @@ public class InterpreterService {
                         new ImmutablePair<>(secondRelationName, testRepository.getRelation(secondRelationName)),
                         Arrays.stream(Arrays.copyOfRange(tokenizedOperation, 5, lastAttribute)).toList()
                 );
-                case "GET" -> relationGetMap.put(firstRelationName, multimapToMap.convert(firstRelation));
+                case "GET" -> relationGetMap.put(firstRelationName, firstRelation);
                 case "ANSWER" -> relationMap.put("", firstRelation);
                 default -> throw new BaseException("Unexpected error", StatusType.RT.toString());
             }
 
-            if (!Objects.equals(operationName, "GET") && !Objects.equals(operationName, "ANSWER")) {
+            if (!Objects.equals(operationName, "GET") && !Objects.equals(operationName, "ANSWER") || hasArrow) {
                 relationMap.put(tokenizedOperation[lastIndex], result);
             }
         }
 
         Set<Multimap<String, String>> output = testRepository.getResult();
-        return buildResponse(multimapToMap.convert(output), relationGetMap);
+        return buildResponse(output, relationGetMap);
     }
 }

@@ -26,12 +26,11 @@ public class InterpreterController {
                 .status(HttpStatus.OK)
                 .body(interpreterService.inputProcessing(
                         dto.getQuery(),
-                        interpreterService.inputConversion(dto.getRelations())));
+                        dto.getRelations()));
     }
 
     @PostMapping(value = "/validate")
-    public ResponseEntity<ResultDto> sendForValidation(@RequestBody RequestValidationDataDto dto)
-            throws IOException {
+    public ResponseEntity<ResultDto> sendForValidation(@RequestBody RequestValidationDataDto dto) throws IOException {
 
         return ResponseEntity
                 .status(HttpStatus.OK)

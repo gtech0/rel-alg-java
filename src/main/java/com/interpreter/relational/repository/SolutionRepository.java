@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.ResourceUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -59,21 +60,19 @@ public class SolutionRepository {
     }
 
     public void initialize() throws IOException {
-        String resultPath = "classpath:solutionResult.json";
-        String relationPath = "classpath:solutionRelations.json";
-        String problemPath = "classpath:problem.json";
+        File result = ResourceUtils.getFile("classpath:solutionResult.json");
+        File relation = ResourceUtils.getFile("classpath:solutionRelations.json");
+        File problem = ResourceUtils.getFile("classpath:problem.json");
 
-        Map<String, Set<Multimap<String, String>>> solutionResult = mapper
-                .readValue(ResourceUtils.getFile(resultPath), new TypeReference<>() {});
+        Map<String, Set<Multimap<String, String>>> solutionResult = mapper.readValue(result, new TypeReference<>() {});
 
         Map<String, Map<String, Set<Multimap<String, String>>>> solutionRelations = mapper
-                .readValue(ResourceUtils.getFile(relationPath), new TypeReference<>() {});
+                .readValue(relation, new TypeReference<>() {});
 
-        Multimap<String, String> problem = mapper
-                .readValue(ResourceUtils.getFile(problemPath), new TypeReference<>() {});
+        Multimap<String, String> problems = mapper.readValue(problem, new TypeReference<>() {});
 
         storeInSolutionResult(solutionResult);
         storeInSolutionRelations(solutionRelations);
-        storeInProblem(problem);
+        storeInProblem(problems);
     }
 }

@@ -2,6 +2,7 @@ package com.interpreter.relational.operation;
 
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
+import com.interpreter.relational.dto.AttributeDto;
 import com.interpreter.relational.dto.ComparatorParams;
 import com.interpreter.relational.exception.BaseException;
 import com.interpreter.relational.exception.StatusType;
@@ -13,6 +14,7 @@ import static com.interpreter.relational.util.AttributeProcessor.extractAttribut
 import static com.interpreter.relational.util.comparator.ComparatorMethods.*;
 import static com.interpreter.relational.util.UtilityMethods.*;
 import static java.util.Map.entry;
+import static org.apache.commons.lang3.math.NumberUtils.isCreatable;
 
 public class Select {
     public static Set<Multimap<String, String>> selection(Pair<String, Set<Multimap<String, String>>> relation,
@@ -73,9 +75,9 @@ public class Select {
                                         Set<Multimap<String, String>> result,
                                         Stack<Object> results
     ) {
-        String attributeLeft = extractAttribute(List.of(relationName), params.getOperandLeft());
-        String attributeRight = extractAttribute(List.of(relationName), params.getOperandRight());
-        List<String> attributes = List.of(attributeLeft, attributeRight);
+        AttributeDto attributeLeft = extractAttribute(List.of(relationName), params.getOperandLeft());
+        AttributeDto attributeRight = extractAttribute(List.of(relationName), params.getOperandRight());
+        List<String> attributes = List.of(attributeLeft.getAttribute(), attributeRight.getAttribute());
         for (Multimap<String, String> map : relation.getRight()) {
             for (String attribute : attributes) {
                 if (incorrectAttribute(map, attribute)) {
@@ -84,15 +86,15 @@ public class Select {
                 }
             }
 
-            Collection<String> valuesOfLeft = map.get(attributeLeft);
-            Collection<String> valuesOfRight = map.get(attributeRight);
+            Collection<String> valuesOfLeft = map.get(attributeLeft.getAttribute());
+            Collection<String> valuesOfRight = map.get(attributeRight.getAttribute());
             checkIfAttributeAndCompare(map, valuesOfLeft, valuesOfRight, result, params);
         }
         results.push(result);
     }
 
-    private static boolean incorrectAttribute(Multimap<String, String> map, String attributeRight) {
-        return !isQuoted(attributeRight) && !map.asMap().containsKey(attributeRight);
+    private static boolean incorrectAttribute(Multimap<String, String> map, String value) {
+        return !isQuoted(value) && !isCreatable(value) && !map.asMap().containsKey(value);
     }
 
     private static void checkIfAttributeAndCompare(Multimap<String, String> map,
@@ -152,30 +154,22 @@ public class Select {
         return reversedTokens.get(token);
     }
 
-    private static void simpleMathParser(String token, String operand1, String operand2, Stack<Object> results) {
-        if (isANumber(operand1) && isANumber(operand2)) {
-            double val1 = Double.parseDouble(operand1);
-            double val2 = Double.parseDouble(operand2);
+    private static void simpleMathParser(String token, String operandLeft, String operandRight, Stack<Object> results) {
+        if (isCreatable(operandLeft) && isCreatable(operandRight)) {
+            double valueLeft = Double.parseDouble(operandLeft);
+            double valueRight = Double.parseDouble(operandRight);
             switch (token) {
-                case "+":
-                    results.push(Double.toString(val2 + val1));
-                    break;
-                case "-":
-                    results.push(Double.toString(val2 - val1));
-                    break;
-                case "*":
-                    results.push(Double.toString(val2 * val1));
-                    break;
-                case "/":
-                    results.push(Double.toString(val2 / val1));
-                    break;
+                case "+" -> results.push(Double.toString(valueLeft + valueRight));
+                case "-" -> results.push(Double.toString(valueLeft - valueRight));
+                case "*" -> results.push(Double.toString(valueLeft * valueRight));
+                case "/" -> results.push(Double.toString(valueLeft / valueRight));
             }
         } else {
             throw new BaseException("Incorrect mathematical expression", StatusType.CE.toString());
         }
     }
 
-    public static Queue<String> shuntingYard(List<String> tokens) {
+    private static Queue<String> shuntingYard(List<String> tokens) {
         Queue<String> outputQueue = new LinkedList<>();
         Stack<String> operatorStack = new Stack<>();
         Map<String, Integer> operators = Map.ofEntries(

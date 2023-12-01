@@ -29,16 +29,16 @@ public class InterpreterService {
     private final SolutionRepository solutionRepository;
 
     public void checkQuery(List<String> query) {
-        for (int i = 0; i < query.size(); i++) {
+        for (int queryIndex = 0; queryIndex < query.size(); queryIndex++) {
             Integer index = null;
             for (PatternEnum currentPattern : PatternEnum.values()) {
-                if (currentPattern.patternMatches(query.get(i))) {
-                    index = i;
+                if (currentPattern.patternMatches(query.get(queryIndex))) {
+                    index = queryIndex;
                 }
             }
 
             if (index == null) {
-                throw new BaseException("No matching in line " + (i + 1), StatusType.CE.toString());
+                throw new BaseException("No matching in line " + (queryIndex + 1), StatusType.CE.toString());
             }
         }
     }

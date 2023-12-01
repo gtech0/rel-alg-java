@@ -9,6 +9,7 @@ import java.util.Objects;
 
 import static com.interpreter.relational.util.UtilityMethods.*;
 import static java.util.Map.entry;
+import static org.apache.commons.lang3.math.NumberUtils.isCreatable;
 
 public class ComparatorMethods {
 
@@ -21,12 +22,12 @@ public class ComparatorMethods {
             entry(">", "greaterThan")
     );
 
-    public static String removeQuotes(String value) {
+    private static String removeQuotes(String value) {
         return value.replaceAll("\"", "");
     }
 
     public static boolean numericComparator(ComparatorParams params) {
-        if (!(isANumber(params.getOperandLeft()) && isANumber(params.getOperandRight()))) {
+        if (!(isCreatable(params.getOperandLeft()) && isCreatable(params.getOperandRight()))) {
             return false;
         }
 
@@ -59,18 +60,6 @@ public class ComparatorMethods {
         String newStrVal = isQuoted(params.getOperandRight()) ? removeQuotes(params.getOperandRight()) : params.getOperandRight();
         return ((Objects.equals(params.getToken(), "=") && Objects.equals(currentStrVal, newStrVal))
                 || (Objects.equals(params.getToken(), "!=") && !Objects.equals(currentStrVal, newStrVal)));
-    }
-
-    public static boolean isANumber(String value) {
-        if (value == null) {
-            return false;
-        }
-        try {
-            Double.parseDouble(value);
-        } catch (NumberFormatException e) {
-            return false;
-        }
-        return true;
     }
 
     public static boolean isADate(String value) {

@@ -2,8 +2,6 @@ package com.interpreter.relational.operation;
 
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
-import com.interpreter.relational.exception.BaseException;
-import com.interpreter.relational.exception.StatusType;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -12,7 +10,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.interpreter.relational.util.AttributeProcessor.extractAttribute;
+import static com.interpreter.relational.util.UtilityMethods.*;
 
 public class Division {
     public static Set<Multimap<String, String>> division(Pair<String, Set<Multimap<String, String>>> relation1,
@@ -27,11 +25,7 @@ public class Division {
         for (Multimap<String, String> multimap : commonRelation)
         {
             for (String attribute : commonAttributes) {
-                String finalAttribute = extractAttribute(relationNames, attribute);
-                if (!multimap.containsKey(finalAttribute)) {
-                    throw new BaseException("Attribute " + finalAttribute + " of relations "
-                            + relationNames + " doesn't exist", StatusType.CE.toString());
-                }
+                returnAttributeIfExist(multimap, attribute, relationNames);
             }
         }
 

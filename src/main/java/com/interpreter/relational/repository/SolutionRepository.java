@@ -22,21 +22,9 @@ import java.util.Set;
 public class SolutionRepository {
 
     private final ObjectMapper mapper;
-    Map<String, Set<Multimap<String, String>>> solutionResult = new HashMap<>();
-    Map<String, Map<String, Set<Multimap<String, String>>>> solutionRelations = new HashMap<>();
     Multimap<String, String> problem = ArrayListMultimap.create();
-
-    public void storeInSolutionResult(Map<String, Set<Multimap<String, String>>> newMap) {
-        solutionResult.putAll(newMap);
-    }
-
-    public void storeInSolutionRelations(Map<String, Map<String, Set<Multimap<String, String>>>> newMap) {
-        solutionRelations.putAll(newMap);
-    }
-
-    public void storeInProblem(Multimap<String, String> newMap) {
-        problem.putAll(newMap);
-    }
+    Map<String, Map<String, Set<Multimap<String, String>>>> solutionRelations = new HashMap<>();
+    Map<String, Set<Multimap<String, String>>> solutionResult = new HashMap<>();
 
     public Set<Multimap<String, String>> getSolutionResult(String key) {
         Set<Multimap<String, String>> relation = solutionResult.get(key);
@@ -65,14 +53,12 @@ public class SolutionRepository {
         File problem = ResourceUtils.getFile("classpath:problem.json");
 
         Map<String, Set<Multimap<String, String>>> solutionResult = mapper.readValue(result, new TypeReference<>() {});
-
         Map<String, Map<String, Set<Multimap<String, String>>>> solutionRelations = mapper
                 .readValue(relation, new TypeReference<>() {});
-
         Multimap<String, String> problems = mapper.readValue(problem, new TypeReference<>() {});
 
-        storeInSolutionResult(solutionResult);
-        storeInSolutionRelations(solutionRelations);
-        storeInProblem(problems);
+        this.solutionResult.putAll(solutionResult);
+        this.solutionRelations.putAll(solutionRelations);
+        this.problem.putAll(problems);
     }
 }

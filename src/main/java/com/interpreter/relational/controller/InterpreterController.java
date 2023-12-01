@@ -24,9 +24,7 @@ public class InterpreterController {
 
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(interpreterService.inputProcessing(
-                        dto.getQuery(),
-                        dto.getRelations()));
+                .body(interpreterService.inputProcessing(dto.getQuery(), dto.getRelations()));
     }
 
     @PostMapping(value = "/validate")

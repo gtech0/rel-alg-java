@@ -21,12 +21,11 @@ public class Projection {
                     Multimap<String, String> newMap = ArrayListMultimap.create();
                     attributes.forEach(
                             attribute -> {
-                                String finalAttribute = extractAttribute(List.of(relation.getLeft()), attribute);
+                                String finalAttribute = extractAttribute(List.of(relation.getLeft()), attribute)
+                                        .getAttribute();
 
                                 if (map.containsKey(finalAttribute)) {
-                                    map.get(finalAttribute).forEach(
-                                            value -> newMap.put(finalAttribute, value)
-                                    );
+                                    map.get(finalAttribute).forEach(value -> newMap.put(finalAttribute, value));
                                 } else {
                                     throw new BaseException("Attribute " + finalAttribute + " of relation "
                                             + relation.getLeft() + " doesn't exist", StatusType.CE.toString());

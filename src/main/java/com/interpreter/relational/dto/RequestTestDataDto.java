@@ -1,6 +1,6 @@
 package com.interpreter.relational.dto;
 
-import com.google.common.collect.Multimap;
+import com.interpreter.relational.service.RowMap;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,6 +16,6 @@ public class RequestTestDataDto {
 
     private List<String> query;
 
-    private Map<String, Set<Multimap<String, String>>> relations;
+    private Map<String, Set<RowMap>> relations;
 
 }

@@ -2,10 +2,9 @@ package com.interpreter.relational.repository;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
 import com.interpreter.relational.exception.BaseException;
 import com.interpreter.relational.exception.StatusType;
+import com.interpreter.relational.service.RowMap;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.ResourceUtils;
@@ -22,19 +21,19 @@ import java.util.Set;
 public class SolutionRepository {
 
     private final ObjectMapper mapper;
-    Multimap<String, String> problem = ArrayListMultimap.create();
-    Map<String, Map<String, Set<Multimap<String, String>>>> solutionRelations = new HashMap<>();
-    Map<String, Set<Multimap<String, String>>> solutionResult = new HashMap<>();
+    RowMap problem = new RowMap();
+    Map<String, Map<String, Set<RowMap>>> solutionRelations = new HashMap<>();
+    Map<String, Set<RowMap>> solutionResult = new HashMap<>();
 
-    public Set<Multimap<String, String>> getSolutionResult(String key) {
-        Set<Multimap<String, String>> relation = solutionResult.get(key);
+    public Set<RowMap> getSolutionResult(String key) {
+        Set<RowMap> relation = solutionResult.get(key);
         if (relation == null)
             throw new BaseException("Relation " + key + " is null", StatusType.CE.toString());
         return relation;
     }
 
-    public Map<String, Set<Multimap<String, String>>> getSolutionRelations(String key) {
-        Map<String, Set<Multimap<String, String>>> relation = solutionRelations.get(key);
+    public Map<String, Set<RowMap>> getSolutionRelations(String key) {
+        Map<String, Set<RowMap>> relation = solutionRelations.get(key);
         if (relation == null)
             throw new BaseException("Relation " + key + " is null", StatusType.CE.toString());
         return relation;
@@ -48,14 +47,17 @@ public class SolutionRepository {
     }
 
     public void initialize() throws IOException {
+        this.solutionResult.clear();
+        this.solutionRelations.clear();
+        this.problem.clear();
+
         File result = ResourceUtils.getFile("classpath:solutionResult.json");
         File relation = ResourceUtils.getFile("classpath:solutionRelations.json");
         File problem = ResourceUtils.getFile("classpath:problem.json");
 
-        Map<String, Set<Multimap<String, String>>> solutionResult = mapper.readValue(result, new TypeReference<>() {});
-        Map<String, Map<String, Set<Multimap<String, String>>>> solutionRelations = mapper
-                .readValue(relation, new TypeReference<>() {});
-        Multimap<String, String> problems = mapper.readValue(problem, new TypeReference<>() {});
+        Map<String, Set<RowMap>> solutionResult = mapper.readValue(result, new TypeReference<>() {});
+        Map<String, Map<String, Set<RowMap>>> solutionRelations = mapper.readValue(relation, new TypeReference<>() {});
+        RowMap problems = mapper.readValue(problem, new TypeReference<>() {});
 
         this.solutionResult.putAll(solutionResult);
         this.solutionRelations.putAll(solutionRelations);

@@ -1,15 +1,9 @@
 package com.interpreter.relational.service;
 
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
 import com.interpreter.relational.dto.ResponseDataDto;
 import com.interpreter.relational.dto.ResultDto;
 import com.interpreter.relational.exception.BaseException;
 import com.interpreter.relational.exception.StatusType;
-import com.interpreter.relational.operation.CartesianProduct;
-import com.interpreter.relational.operation.Join;
-import com.interpreter.relational.operation.Select;
-import com.interpreter.relational.operation.Union;
 import com.interpreter.relational.repository.SolutionRepository;
 import com.interpreter.relational.repository.TestRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,8 +13,14 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.util.*;
 
+import static com.interpreter.relational.operation.CartesianProduct.product;
+import static com.interpreter.relational.operation.Difference.difference;
 import static com.interpreter.relational.operation.Division.division;
+import static com.interpreter.relational.operation.Intersection.intersection;
+import static com.interpreter.relational.operation.Join.join;
 import static com.interpreter.relational.operation.Projection.projection;
+import static com.interpreter.relational.operation.Select.selection;
+import static com.interpreter.relational.operation.Union.union;
 
 @Service
 @RequiredArgsConstructor
@@ -28,7 +28,7 @@ public class InterpreterService {
     private final TestRepository testRepository;
     private final SolutionRepository solutionRepository;
 
-    public void checkQuery(List<String> query) {
+    private void checkQuery(List<String> query) {
         for (int queryIndex = 0; queryIndex < query.size(); queryIndex++) {
             Integer index = null;
             for (PatternEnum currentPattern : PatternEnum.values()) {
@@ -43,8 +43,8 @@ public class InterpreterService {
         }
     }
 
-    public ResponseDataDto buildResponse(Set<Multimap<String, String>> result,
-                                         Map<String, Set<Multimap<String, String>>> getRelationMap) {
+    private ResponseDataDto buildResponse(Set<RowMap> result,
+                                          Map<String, Set<RowMap>> getRelationMap) {
         return ResponseDataDto.builder()
                 .result(result)
                 .getResults(getRelationMap)
@@ -58,9 +58,9 @@ public class InterpreterService {
         int problemNum = 0;
         for (String problem : problemCollection) {
             var solutionRelations = solutionRepository.getSolutionRelations(problem);
-            Set<Multimap<String, String>> solutionResult = solutionRepository.getSolutionResult(problem);
+            Set<RowMap> solutionResult = solutionRepository.getSolutionResult(problem);
 
-            Set<Multimap<String, String>> result = inputProcessing(query, solutionRelations).getResult();
+            Set<RowMap> result = inputProcessing(query, solutionRelations).getResult();
 
             ++problemNum;
             if (!Objects.equals(solutionResult, result)) {
@@ -72,12 +72,12 @@ public class InterpreterService {
     }
 
     public ResponseDataDto inputProcessing(List<String> query,
-                                           Map<String, Set<Multimap<String, String>>> data
+                                           Map<String, Set<RowMap>> data
     ) {
         testRepository.clear();
         testRepository.storeInMap(data);
-        Map<String, Set<Multimap<String, String>>> relationMap = testRepository.findAll();
-        Map<String, Set<Multimap<String, String>>> relationGetMap = new HashMap<>();
+        Map<String, Set<RowMap>> relationMap = testRepository.findAll();
+        Map<String, Set<RowMap>> relationGetMap = new HashMap<>();
 
         if (query.isEmpty()) {
             return buildResponse(new HashSet<>(), new HashMap<>());
@@ -86,48 +86,50 @@ public class InterpreterService {
         query.removeIf(String::isBlank);
         checkQuery(query);
 
-        for (String queryOperation : query) {
-            String[] tokenizedOperation = queryOperation.split("\\s+");
+        for (String operation : query) {
+            String[] tokenizedOperation = operation.split("\\s+");
 
             String operationName = tokenizedOperation[0];
             int lastIndex = tokenizedOperation.length - 1;
             int lastAttribute = lastIndex - 1;
             boolean hasArrow = Objects.equals(tokenizedOperation[lastIndex - 1], "->");
+            Set<RowMap> result = new HashSet<>();
 
-            Set<Multimap<String, String>> result = new HashSet<>();
+            Set<String> tokensWithOneRelation = Set.of("PROJECT", "SELECT", "GET", "ANSWER");
 
             String firstRelationName = tokenizedOperation[1];
-            Set<Multimap<String, String>> firstRelation = testRepository.getRelation(firstRelationName);
+            Set<RowMap> firstRelation = testRepository.getRelation(firstRelationName);
 
             String secondRelationName = null;
-            if (tokenizedOperation.length > 3) {
+            Set<RowMap> secondRelation = null;
+            if (tokenizedOperation.length >= 4) {
                 secondRelationName = tokenizedOperation[3];
+                if (!tokensWithOneRelation.contains(operationName)) {
+                    secondRelation = testRepository.getRelation(secondRelationName);
+                }
             }
 
             switch (operationName) {
-                case "UNION" -> result = Union.union(firstRelation, testRepository.getRelation(secondRelationName));
-                case "DIFFERENCE" ->
-                        result = Sets.difference(firstRelation, testRepository.getRelation(secondRelationName));
-                case "TIMES" ->
-                        result = CartesianProduct.product(firstRelation, testRepository.getRelation(secondRelationName));
-                case "INTERSECT" ->
-                        result = Sets.intersection(firstRelation, testRepository.getRelation(secondRelationName));
+                case "UNION" -> result = union(firstRelation, secondRelation, operationName);
+                case "DIFFERENCE" -> result = difference(firstRelation, secondRelation, operationName);
+                case "TIMES" -> result = product(firstRelation, secondRelation);
+                case "INTERSECT" -> result = intersection(firstRelation, secondRelation, operationName);
                 case "PROJECT" -> result = projection(
                         new ImmutablePair<>(firstRelationName, firstRelation),
                         Arrays.stream(Arrays.copyOfRange(tokenizedOperation, 3, lastAttribute)).toList()
                 );
-                case "SELECT" -> result = Select.selection(
+                case "SELECT" -> result = selection(
                         new ImmutablePair<>(firstRelationName, firstRelation),
                         Arrays.stream(Arrays.copyOfRange(tokenizedOperation, 3, lastAttribute)).toList()
                 );
                 case "DIVIDE" -> result = division(
                         new ImmutablePair<>(firstRelationName, firstRelation),
-                        new ImmutablePair<>(secondRelationName, testRepository.getRelation(secondRelationName)),
+                        new ImmutablePair<>(secondRelationName, secondRelation),
                         Arrays.stream(Arrays.copyOfRange(tokenizedOperation, 5, lastAttribute)).toList()
                 );
-                case "JOIN" -> result = Join.join(
+                case "JOIN" -> result = join(
                         new ImmutablePair<>(firstRelationName, firstRelation),
-                        new ImmutablePair<>(secondRelationName, testRepository.getRelation(secondRelationName)),
+                        new ImmutablePair<>(secondRelationName, secondRelation),
                         Arrays.stream(Arrays.copyOfRange(tokenizedOperation, 5, lastAttribute)).toList()
                 );
                 case "GET" -> relationGetMap.put(firstRelationName, firstRelation);
@@ -140,7 +142,7 @@ public class InterpreterService {
             }
         }
 
-        Set<Multimap<String, String>> output = testRepository.getResult();
+        Set<RowMap> output = testRepository.getResult();
         return buildResponse(output, relationGetMap);
     }
 }

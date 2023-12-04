@@ -1,11 +1,10 @@
 package com.interpreter.relational.dto;
 
+import com.interpreter.relational.service.RowMap;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Collection;
-import java.util.Map;
 import java.util.Set;
 
 @Data
@@ -15,6 +14,6 @@ public class TestDataDto {
 
     private ResponseDataDto dataDto;
 
-    private Set<Map<String, Collection<String>>> expected;
+    private Set<RowMap> expected;
 
 }

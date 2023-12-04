@@ -1,30 +1,30 @@
 package com.interpreter.relational.operation;
 
-import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.interpreter.relational.dto.AttributeDto;
 import com.interpreter.relational.dto.ComparatorParams;
 import com.interpreter.relational.exception.BaseException;
 import com.interpreter.relational.exception.StatusType;
+import com.interpreter.relational.service.RowMap;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
 
 import static com.interpreter.relational.util.AttributeProcessor.extractAttribute;
-import static com.interpreter.relational.util.comparator.ComparatorMethods.*;
 import static com.interpreter.relational.util.UtilityMethods.*;
+import static com.interpreter.relational.util.comparator.ComparatorMethods.*;
 import static java.util.Map.entry;
 import static org.apache.commons.lang3.math.NumberUtils.isCreatable;
 
 public class Select {
-    public static Set<Multimap<String, String>> selection(Pair<String, Set<Multimap<String, String>>> relation,
-                                                          List<String> tokens) {
+    public static Set<RowMap> selection(Pair<String, Set<RowMap>> relation,
+                                        List<String> tokens) {
         Queue<String> RPN = shuntingYard(tokens);
         String relationName = relation.getLeft();
         Stack<Object> results = new Stack<>();
 
         for (String token : RPN) {
-            Set<Multimap<String, String>> result = new HashSet<>();
+            Set<RowMap> result = new HashSet<>();
             switch (token) {
                 case "=", "!=", ">", "<", ">=", "<=" -> {
                     String operandRight = (String) results.pop();
@@ -47,14 +47,14 @@ public class Select {
                     simpleMathParser(token, operandLeft, operandRight, results);
                 }
                 case "OR" -> {
-                    var operandRight = (Set<Multimap<String, String>>) results.pop();
-                    var operandLeft = (Set<Multimap<String, String>>) results.pop();
+                    var operandRight = (Set<RowMap>) results.pop();
+                    var operandLeft = (Set<RowMap>) results.pop();
                     result = Sets.union(operandLeft, operandRight);
                     results.push(result);
                 }
                 case "AND" -> {
-                    var operandRight = (Set<Multimap<String, String>>) results.pop();
-                    var operandLeft = (Set<Multimap<String, String>>) results.pop();
+                    var operandRight = (Set<RowMap>) results.pop();
+                    var operandLeft = (Set<RowMap>) results.pop();
                     result = Sets.intersection(operandLeft, operandRight);
                     results.push(result);
                 }
@@ -66,19 +66,19 @@ public class Select {
             return new HashSet<>();
         }
 
-        return (Set<Multimap<String, String>>) results.firstElement();
+        return (Set<RowMap>) results.firstElement();
     }
 
-    private static void compareOperands(Pair<String, Set<Multimap<String, String>>> relation,
+    private static void compareOperands(Pair<String, Set<RowMap>> relation,
                                         String relationName,
                                         ComparatorParams params,
-                                        Set<Multimap<String, String>> result,
+                                        Set<RowMap> result,
                                         Stack<Object> results
     ) {
         AttributeDto attributeLeft = extractAttribute(List.of(relationName), params.getOperandLeft());
         AttributeDto attributeRight = extractAttribute(List.of(relationName), params.getOperandRight());
         List<String> attributes = List.of(attributeLeft.getAttribute(), attributeRight.getAttribute());
-        for (Multimap<String, String> map : relation.getRight()) {
+        for (RowMap map : relation.getRight()) {
             for (String attribute : attributes) {
                 if (incorrectAttribute(map, attribute)) {
                     throw new BaseException("Attribute " + attribute + " of relation "
@@ -93,14 +93,14 @@ public class Select {
         results.push(result);
     }
 
-    private static boolean incorrectAttribute(Multimap<String, String> map, String value) {
-        return !isQuoted(value) && !isCreatable(value) && !map.asMap().containsKey(value);
+    private static boolean incorrectAttribute(RowMap map, String value) {
+        return !isQuoted(value) && !isCreatable(value) && !map.containsKey(value);
     }
 
-    private static void checkIfAttributeAndCompare(Multimap<String, String> map,
+    private static void checkIfAttributeAndCompare(RowMap map,
                                                    Collection<String> valuesOfLeft,
                                                    Collection<String> valuesOfRight,
-                                                   Set<Multimap<String, String>> result,
+                                                   Set<RowMap> result,
                                                    ComparatorParams params
     ) {
         if (!valuesOfLeft.isEmpty() && !valuesOfRight.isEmpty()) {
@@ -128,9 +128,9 @@ public class Select {
         }
     }
 
-    private static void valueComparator(Multimap<String, String> map,
+    private static void valueComparator(RowMap map,
                                         ComparatorParams params,
-                                        Set<Multimap<String, String>> result
+                                        Set<RowMap> result
     ) {
         List<String> comparatorTokens = List.of(">", "<", ">=", "<=", "=", "!=");
 

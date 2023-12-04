@@ -1,6 +1,6 @@
 package com.interpreter.relational.dto;
 
-import com.google.common.collect.Multimap;
+import com.interpreter.relational.service.RowMap;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,8 +15,8 @@ import java.util.Set;
 @AllArgsConstructor
 public class ResponseDataDto {
 
-    Set<Multimap<String, String>> result;
+    Set<RowMap> result;
 
-    Map<String, Set<Multimap<String, String>>> getResults;
+    Map<String, Set<RowMap>> getResults;
 
 }

@@ -3,11 +3,10 @@ package com.interpreter.relational.util.comparator;
 import com.interpreter.relational.dto.ComparatorParams;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
 import java.util.Map;
 import java.util.Objects;
 
-import static com.interpreter.relational.util.UtilityMethods.*;
+import static com.interpreter.relational.util.BasicUtilityMethods.*;
 import static java.util.Map.entry;
 import static org.apache.commons.lang3.math.NumberUtils.isCreatable;
 
@@ -60,17 +59,5 @@ public class ComparatorMethods {
         String newStrVal = isQuoted(params.getOperandRight()) ? removeQuotes(params.getOperandRight()) : params.getOperandRight();
         return ((Objects.equals(params.getToken(), "=") && Objects.equals(currentStrVal, newStrVal))
                 || (Objects.equals(params.getToken(), "!=") && !Objects.equals(currentStrVal, newStrVal)));
-    }
-
-    public static boolean isADate(String value) {
-        if (value == null) {
-            return false;
-        }
-        try {
-            LocalDate.parse(value);
-        } catch (DateTimeParseException e) {
-            return false;
-        }
-        return true;
     }
 }

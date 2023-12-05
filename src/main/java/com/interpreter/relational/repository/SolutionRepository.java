@@ -11,10 +11,7 @@ import org.springframework.util.ResourceUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Repository
 @RequiredArgsConstructor
@@ -39,8 +36,8 @@ public class SolutionRepository {
         return relation;
     }
 
-    public Collection<String> getProblemCollection(String key) {
-        Collection<String> problemCollection = problem.get(key);
+    public List<String> getProblemCollection(String key) {
+        List<String> problemCollection = problem.get(key);
         if (problemCollection.isEmpty())
             throw new BaseException("No " + key + " problem exist", StatusType.CE.toString());
         return problem.get(key);

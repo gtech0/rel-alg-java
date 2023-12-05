@@ -1,45 +1,34 @@
 package com.interpreter.relational.operation;
 
-import com.google.common.collect.Sets;
 import com.interpreter.relational.service.RowMap;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import static com.interpreter.relational.util.UtilityMethods.*;
+import static com.interpreter.relational.operation.Difference.difference;
+import static com.interpreter.relational.util.BasicUtilityMethods.*;
 
 public class Division {
     public static Set<RowMap> division(Pair<String, Set<RowMap>> relation1,
                                        Pair<String, Set<RowMap>> relation2,
-                                       List<String> commonAttributes
+                                       List<String> attributes,
+                                       int operationNumber
     ) {
-        String relName1 = relation1.getLeft();
-        String relName2 = relation2.getLeft();
+        Map<String, Set<RowMap>> relations = Map.ofEntries(relation1, relation2);
 
-        List<String> relationNames = List.of(relName1, relName2);
-        Set<RowMap> commonRelation = Stream
-                .concat(relation1.getRight().stream(), relation2.getRight().stream())
-                .collect(Collectors.toSet());
-
-        for (RowMap multimap : commonRelation) {
-            for (String attribute : commonAttributes) {
-                returnAttributeIfExist(multimap, attribute, relationNames);
-            }
+        for (String attribute : attributes) {
+            returnAttributeIfExist(relations, attribute);
         }
 
-        Pair<String, Set<RowMap>> finalRelation = new ImmutablePair<>("", relation1.getRight());
-        Set<RowMap> temp1 = CartesianProduct
-                .product(Projection
-                        .projection(finalRelation, commonAttributes), relation2.getRight());
-
-        Pair<String, Set<RowMap>> temp2 =
-                new ImmutablePair<>("", Sets.difference(temp1, finalRelation.getRight()));
-
-        Set<RowMap> temp3 = Projection.projection(temp2, commonAttributes);
-        return Sets.difference(Projection.projection(finalRelation, commonAttributes), temp3);
+        Pair<String, Set<RowMap>> firstRelation = new ImmutablePair<>("", relation1.getRight());
+        Set<RowMap> temp0 = Projection.projection(firstRelation, attributes);
+        Set<RowMap> temp1 = CartesianProduct.product(temp0, relation2.getRight());
+        Set<RowMap> temp2Data = difference(temp1, firstRelation.getRight(), operationNumber);
+        Pair<String, Set<RowMap>> temp2 = new ImmutablePair<>("", temp2Data);
+        Set<RowMap> temp3 = Projection.projection(temp2, attributes);
+        return difference(Projection.projection(firstRelation, attributes), temp3, operationNumber);
     }
 }

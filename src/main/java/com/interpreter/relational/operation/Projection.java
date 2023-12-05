@@ -1,11 +1,11 @@
 package com.interpreter.relational.operation;
 
+import com.interpreter.relational.dto.AttributeDto;
 import com.interpreter.relational.exception.BaseException;
 import com.interpreter.relational.exception.StatusType;
 import com.interpreter.relational.service.RowMap;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -21,14 +21,21 @@ public class Projection {
                     RowMap newMap = new RowMap();
                     attributes.forEach(
                             attribute -> {
-                                String finalAttribute = extractAttribute(List.of(relation.getLeft()), attribute)
-                                        .getAttribute();
+                                AttributeDto attributeDto = extractAttribute(relation.getLeft(), attribute);
 
-                                if (map.containsKey(finalAttribute)) {
-                                    map.get(finalAttribute).forEach(value -> newMap.put(finalAttribute, Collections.singleton(value)));
-                                } else {
-                                    throw new BaseException("Attribute " + finalAttribute + " of relation "
-                                            + relation.getLeft() + " doesn't exist", StatusType.CE.toString());
+                                if (attributeDto != null) {
+                                    String finalAttribute = attributeDto.getAttribute();
+
+                                    if (map.containsKey(finalAttribute)) {
+                                        map.get(finalAttribute).forEach(
+                                                value -> newMap.put(finalAttribute, List.of(value))
+                                        );
+                                    } else {
+                                        throw new BaseException("Attribute "
+                                                + finalAttribute + " of relation "
+                                                + relation.getLeft() + " doesn't exist",
+                                                StatusType.CE.toString());
+                                    }
                                 }
                             }
                     );

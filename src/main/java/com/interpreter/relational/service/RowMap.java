@@ -1,13 +1,12 @@
 package com.interpreter.relational.service;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
-public class RowMap extends HashMap<String, Collection<String>> {
+public class RowMap extends HashMap<String, List<String>> {
 
-    public Collection<String> get(String key) {
-        Collection<String> values = super.get(key);
+    public List<String> get(String key) {
+        List<String> values = super.get(key);
         if (values == null) {
             return List.of();
         }

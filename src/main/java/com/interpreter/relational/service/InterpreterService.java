@@ -53,7 +53,7 @@ public class InterpreterService {
 
     public ResultDto validation(List<String> query, String problemName) throws IOException {
         solutionRepository.initialize();
-        Collection<String> problemCollection = solutionRepository.getProblemCollection(problemName);
+        List<String> problemCollection = solutionRepository.getProblemCollection(problemName);
 
         int problemNum = 0;
         for (String problem : problemCollection) {
@@ -86,10 +86,11 @@ public class InterpreterService {
         query.removeIf(String::isBlank);
         checkQuery(query);
 
-        for (String operation : query) {
-            String[] tokenizedOperation = operation.split("\\s+");
+        for (int index = 0; index < query.size(); index++) {
+            String[] tokenizedOperation = query.get(index).split("\\s+");
 
             String operationName = tokenizedOperation[0];
+            int operationNumber = index + 1;
             int lastIndex = tokenizedOperation.length - 1;
             int lastAttribute = lastIndex - 1;
             boolean hasArrow = Objects.equals(tokenizedOperation[lastIndex - 1], "->");
@@ -110,10 +111,10 @@ public class InterpreterService {
             }
 
             switch (operationName) {
-                case "UNION" -> result = union(firstRelation, secondRelation, operationName);
-                case "DIFFERENCE" -> result = difference(firstRelation, secondRelation, operationName);
+                case "UNION" -> result = union(firstRelation, secondRelation, operationNumber);
+                case "DIFFERENCE" -> result = difference(firstRelation, secondRelation, operationNumber);
                 case "TIMES" -> result = product(firstRelation, secondRelation);
-                case "INTERSECT" -> result = intersection(firstRelation, secondRelation, operationName);
+                case "INTERSECT" -> result = intersection(firstRelation, secondRelation, operationNumber);
                 case "PROJECT" -> result = projection(
                         new ImmutablePair<>(firstRelationName, firstRelation),
                         Arrays.stream(Arrays.copyOfRange(tokenizedOperation, 3, lastAttribute)).toList()
@@ -125,7 +126,8 @@ public class InterpreterService {
                 case "DIVIDE" -> result = division(
                         new ImmutablePair<>(firstRelationName, firstRelation),
                         new ImmutablePair<>(secondRelationName, secondRelation),
-                        Arrays.stream(Arrays.copyOfRange(tokenizedOperation, 5, lastAttribute)).toList()
+                        Arrays.stream(Arrays.copyOfRange(tokenizedOperation, 5, lastAttribute)).toList(),
+                        operationNumber
                 );
                 case "JOIN" -> result = join(
                         new ImmutablePair<>(firstRelationName, firstRelation),

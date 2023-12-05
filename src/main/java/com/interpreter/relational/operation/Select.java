@@ -11,7 +11,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.util.*;
 
 import static com.interpreter.relational.util.AttributeProcessor.extractAttribute;
-import static com.interpreter.relational.util.UtilityMethods.*;
+import static com.interpreter.relational.util.BasicUtilityMethods.*;
 import static com.interpreter.relational.util.comparator.ComparatorMethods.*;
 import static java.util.Map.entry;
 import static org.apache.commons.lang3.math.NumberUtils.isCreatable;
@@ -75,22 +75,24 @@ public class Select {
                                         Set<RowMap> result,
                                         Stack<Object> results
     ) {
-        AttributeDto attributeLeft = extractAttribute(List.of(relationName), params.getOperandLeft());
-        AttributeDto attributeRight = extractAttribute(List.of(relationName), params.getOperandRight());
-        List<String> attributes = List.of(attributeLeft.getAttribute(), attributeRight.getAttribute());
-        for (RowMap map : relation.getRight()) {
-            for (String attribute : attributes) {
-                if (incorrectAttribute(map, attribute)) {
-                    throw new BaseException("Attribute " + attribute + " of relation "
-                            + relationName + " doesn't exist", StatusType.CE.toString());
+        AttributeDto attributeLeft = extractAttribute(relationName, params.getOperandLeft());
+        AttributeDto attributeRight = extractAttribute(relationName, params.getOperandRight());
+        if (attributeLeft != null && attributeRight != null) {
+            List<String> attributes = List.of(attributeLeft.getAttribute(), attributeRight.getAttribute());
+            for (RowMap map : relation.getRight()) {
+                for (String attribute : attributes) {
+                    if (incorrectAttribute(map, attribute)) {
+                        throw new BaseException("Attribute " + attribute + " of relation "
+                                + relationName + " doesn't exist", StatusType.CE.toString());
+                    }
                 }
-            }
 
-            Collection<String> valuesOfLeft = map.get(attributeLeft.getAttribute());
-            Collection<String> valuesOfRight = map.get(attributeRight.getAttribute());
-            checkIfAttributeAndCompare(map, valuesOfLeft, valuesOfRight, result, params);
+                List<String> valuesOfLeft = map.get(attributeLeft.getAttribute());
+                List<String> valuesOfRight = map.get(attributeRight.getAttribute());
+                checkIfAttributeAndCompare(map, valuesOfLeft, valuesOfRight, result, params);
+            }
+            results.push(result);
         }
-        results.push(result);
     }
 
     private static boolean incorrectAttribute(RowMap map, String value) {
@@ -98,8 +100,8 @@ public class Select {
     }
 
     private static void checkIfAttributeAndCompare(RowMap map,
-                                                   Collection<String> valuesOfLeft,
-                                                   Collection<String> valuesOfRight,
+                                                   List<String> valuesOfLeft,
+                                                   List<String> valuesOfRight,
                                                    Set<RowMap> result,
                                                    ComparatorParams params
     ) {
@@ -173,21 +175,21 @@ public class Select {
         Queue<String> outputQueue = new LinkedList<>();
         Stack<String> operatorStack = new Stack<>();
         Map<String, Integer> operators = Map.ofEntries(
-                entry("AND", 1),
                 entry("OR", 1),
-                entry("=", 2),
-                entry("!=", 2),
-                entry(">", 2),
-                entry("<", 2),
-                entry(">=", 2),
-                entry("<=", 2),
-                entry("NOT", 3),
-                entry("+", 4),
-                entry("-", 4),
-                entry("*", 5),
-                entry("/", 5),
-                entry("(", 6),
-                entry(")", 6)
+                entry("AND", 2),
+                entry("=", 3),
+                entry("!=", 3),
+                entry(">", 3),
+                entry("<", 3),
+                entry(">=", 3),
+                entry("<=", 3),
+                entry("NOT", 4),
+                entry("+", 5),
+                entry("-", 5),
+                entry("*", 6),
+                entry("/", 6),
+                entry("(", 7),
+                entry(")", 7)
         );
 
         for (String token : tokens) {

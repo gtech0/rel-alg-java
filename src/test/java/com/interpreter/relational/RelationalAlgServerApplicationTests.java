@@ -36,8 +36,7 @@ class RelationalAlgServerApplicationTests {
         ResponseDataDto dataDto = interpreterService.inputProcessing(query, data);
 
         String json = new JSONArray(result.get(testName).toString()).toString();
-        Set<RowMap> expected = mapper.readValue(json, new TypeReference<>() {
-        });
+        Set<RowMap> expected = mapper.readValue(json, new TypeReference<>() {});
 
         return new TestDataDto(dataDto, expected);
     }

@@ -6,6 +6,7 @@ import com.interpreter.relational.exception.StatusType;
 import com.interpreter.relational.service.RowMap;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -19,26 +20,25 @@ public class Projection {
                 .stream()
                 .map(map -> {
                     RowMap newMap = new RowMap();
-                    attributes.forEach(
-                            attribute -> {
-                                AttributeDto attributeDto = extractAttribute(relation.getLeft(), attribute);
+                    for (String attribute : attributes) {
+                        AttributeDto attributeDto = extractAttribute(relation.getLeft(), attribute);
 
-                                if (attributeDto != null) {
-                                    String finalAttribute = attributeDto.getAttribute();
+                        if (attributeDto == null) {
+                            continue;
+                        }
 
-                                    if (map.containsKey(finalAttribute)) {
-                                        map.get(finalAttribute).forEach(
-                                                value -> newMap.put(finalAttribute, List.of(value))
-                                        );
-                                    } else {
-                                        throw new BaseException("Attribute "
-                                                + finalAttribute + " of relation "
-                                                + relation.getLeft() + " doesn't exist",
-                                                StatusType.CE.toString());
-                                    }
-                                }
-                            }
-                    );
+                        String finalAttribute = attributeDto.getAttribute();
+                        if (!map.containsKey(finalAttribute)) {
+                            throw new BaseException("Attribute "
+                                    + finalAttribute + " of relation "
+                                    + relation.getLeft() + " doesn't exist",
+                                    StatusType.CE.toString());
+                        }
+
+                        List<String> list = new ArrayList<>(newMap.get(finalAttribute));
+                        list.addAll(map.get(finalAttribute));
+                        newMap.put(finalAttribute, list);
+                    }
                     return newMap;
                 })
                 .collect(Collectors.toSet());

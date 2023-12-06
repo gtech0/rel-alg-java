@@ -41,12 +41,13 @@ public class BasicUtilityMethods {
         for (Map.Entry<String, Set<RowMap>> relation : relations.entrySet()) {
             for (RowMap map : relation.getValue()) {
                 AttributeDto attributeDto = extractAttribute(relation.getKey(), attribute);
-                if (attributeDto != null) {
-                    finalAttribute = attributeDto.getAttribute();
+                if (attributeDto == null) {
+                    continue;
+                }
 
-                    if (map.containsKey(finalAttribute)) {
-                        return finalAttribute;
-                    }
+                finalAttribute = attributeDto.getAttribute();
+                if (map.containsKey(finalAttribute)) {
+                    return finalAttribute;
                 }
             }
         }

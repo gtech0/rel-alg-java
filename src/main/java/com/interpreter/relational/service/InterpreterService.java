@@ -53,18 +53,16 @@ public class InterpreterService {
 
     public ResultDto validation(List<String> query, String problemName) throws IOException {
         solutionRepository.initialize();
-        List<String> problemCollection = solutionRepository.getProblemCollection(problemName);
+        List<String> problems = solutionRepository.getProblemCollection(problemName);
 
-        int problemNum = 0;
-        for (String problem : problemCollection) {
-            var solutionRelations = solutionRepository.getSolutionRelations(problem);
-            Set<RowMap> solutionResult = solutionRepository.getSolutionResult(problem);
+        for (int problemIndex = 0; problemIndex < problems.size(); problemIndex++) {
+            var solutionRelations = solutionRepository.getSolutionRelations(problems.get(problemIndex));
+            Set<RowMap> solutionResult = solutionRepository.getSolutionResult(problems.get(problemIndex));
 
             Set<RowMap> result = inputProcessing(query, solutionRelations).getResult();
 
-            ++problemNum;
             if (!Objects.equals(solutionResult, result)) {
-                throw new BaseException("Test " + problemNum + " has failed", StatusType.WA.toString());
+                throw new BaseException("Test " + (problemIndex + 1) + " has failed", StatusType.WA.toString());
             }
         }
 
@@ -139,7 +137,7 @@ public class InterpreterService {
                 default -> throw new BaseException("Unexpected error", StatusType.RT.toString());
             }
 
-            if (!Objects.equals(operationName, "GET") && !Objects.equals(operationName, "ANSWER") || hasArrow) {
+            if (!Objects.equals(operationName, "GET") && !Objects.equals(operationName, "ANSWER") && hasArrow) {
                 relationMap.put(tokenizedOperation[lastIndex], result);
             }
         }

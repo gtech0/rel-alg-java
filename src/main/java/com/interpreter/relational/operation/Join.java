@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.interpreter.relational.util.BasicUtilityMethods.returnAttributeIfExist;
+import static com.interpreter.relational.util.BasicUtilityMethods.*;
 
 public class Join {
     public static Set<RowMap> join(Pair<String, Set<RowMap>> relation1,

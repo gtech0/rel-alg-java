@@ -14,8 +14,7 @@ import java.util.stream.Collectors;
 import static com.interpreter.relational.util.AttributeProcessor.extractAttribute;
 
 public class Projection {
-    public static Set<RowMap> projection(Pair<String, Set<RowMap>> relation,
-                                         List<String> attributes) {
+    public static Set<RowMap> projection(Pair<String, Set<RowMap>> relation, List<String> attributes) {
         return relation.getRight()
                 .stream()
                 .map(map -> {

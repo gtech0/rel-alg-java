@@ -4,9 +4,7 @@ import com.interpreter.relational.service.RowMap;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.interpreter.relational.operation.Difference.difference;
 import static com.interpreter.relational.util.BasicUtilityMethods.*;
@@ -17,6 +15,13 @@ public class Division {
                                        List<String> attributes,
                                        int operationNumber
     ) {
+//        Optional<RowMap> first = relation1.getRight().stream().findFirst();
+//        Set<String> keys;
+//        if (first.isPresent()) {
+//            keys = first.get().keySet();
+//            attributes.forEach(keys::remove);
+//        }
+
         Map<String, Set<RowMap>> relations = Map.ofEntries(relation1, relation2);
 
         for (String attribute : attributes) {
@@ -29,6 +34,7 @@ public class Division {
         Set<RowMap> temp2Data = difference(temp1, firstRelation.getRight(), operationNumber);
         Pair<String, Set<RowMap>> temp2 = new ImmutablePair<>("", temp2Data);
         Set<RowMap> temp3 = Projection.projection(temp2, attributes);
-        return difference(Projection.projection(firstRelation, attributes), temp3, operationNumber);
+        Set<RowMap> temp4 = Projection.projection(firstRelation, attributes);
+        return difference(temp4, temp3, operationNumber);
     }
 }

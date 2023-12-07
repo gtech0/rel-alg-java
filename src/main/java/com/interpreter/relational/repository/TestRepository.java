@@ -28,7 +28,7 @@ public class TestRepository {
         if (result != null) {
             return result;
         } else {
-            throw new BaseException("Result is null", StatusType.CE.toString());
+            throw new BaseException("Result is null", StatusType.OK.toString());
         }
     }
 

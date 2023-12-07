@@ -219,5 +219,77 @@
         ]
       }
     ]
+  },
+  "sol3-1": {
+    "Completed": [
+      {
+        "Student": [
+          "Fred"
+        ],
+        "Task": [
+          "Database1"
+        ]
+      },
+      {
+        "Student": [
+          "Fred"
+        ],
+        "Task": [
+          "Database2"
+        ]
+      },
+      {
+        "Student": [
+          "Fred"
+        ],
+        "Task": [
+          "Complier1"
+        ]
+      },
+      {
+        "Student": [
+          "Eugene"
+        ],
+        "Task": [
+          "Database1"
+        ]
+      },
+      {
+        "Student": [
+          "Eugene"
+        ],
+        "Task": [
+          "Complier1"
+        ]
+      },
+      {
+        "Student": [
+          "Sarah"
+        ],
+        "Task": [
+          "Database1"
+        ]
+      },
+      {
+        "Student": [
+          "Sarah"
+        ],
+        "Task": [
+          "Database2"
+        ]
+      }
+    ],
+    "DBProject": [
+      {
+        "Task": [
+          "Database1"
+        ]
+      },
+      {
+        "Task": [
+          "Database2"
+        ]
+      }
+    ]
   }
 }

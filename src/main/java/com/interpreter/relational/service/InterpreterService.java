@@ -8,6 +8,7 @@ import com.interpreter.relational.repository.SolutionRepository;
 import com.interpreter.relational.repository.TestRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -51,6 +52,12 @@ public class InterpreterService {
                 .build();
     }
 
+    private List<String> getAttributesFromQuery(String[] tokenizedOperation, int start, int end) {
+        return Arrays
+                .stream(Arrays.copyOfRange(tokenizedOperation, start, end))
+                .toList();
+    }
+
     public ResultDto validation(List<String> query, String problemName) throws IOException {
         solutionRepository.initialize();
         List<String> problems = solutionRepository.getProblemCollection(problemName);
@@ -92,19 +99,26 @@ public class InterpreterService {
             int lastIndex = tokenizedOperation.length - 1;
             int lastAttribute = lastIndex - 1;
             boolean hasArrow = Objects.equals(tokenizedOperation[lastIndex - 1], "->");
+            if (!hasArrow && !Objects.equals(operationName, "ANSWER") && !Objects.equals(operationName, "GET")) {
+                continue;
+            }
+
             Set<RowMap> result = new HashSet<>();
 
             Set<String> tokensWithOneRelation = Set.of("PROJECT", "SELECT", "GET", "ANSWER");
 
             String firstRelationName = tokenizedOperation[1];
             Set<RowMap> firstRelation = testRepository.getRelation(firstRelationName);
+            Pair<String, Set<RowMap>> firstRelationPair = new ImmutablePair<>(firstRelationName, firstRelation);
 
-            String secondRelationName = null;
+            String secondRelationName;
             Set<RowMap> secondRelation = null;
+            Pair<String, Set<RowMap>> secondRelationPair = null;
             if (tokenizedOperation.length >= 4) {
                 secondRelationName = tokenizedOperation[3];
                 if (!tokensWithOneRelation.contains(operationName)) {
                     secondRelation = testRepository.getRelation(secondRelationName);
+                    secondRelationPair = new ImmutablePair<>(secondRelationName, secondRelation);
                 }
             }
 
@@ -114,23 +128,23 @@ public class InterpreterService {
                 case "TIMES" -> result = product(firstRelation, secondRelation);
                 case "INTERSECT" -> result = intersection(firstRelation, secondRelation, operationNumber);
                 case "PROJECT" -> result = projection(
-                        new ImmutablePair<>(firstRelationName, firstRelation),
-                        Arrays.stream(Arrays.copyOfRange(tokenizedOperation, 3, lastAttribute)).toList()
+                        firstRelationPair,
+                        getAttributesFromQuery(tokenizedOperation, 3, lastAttribute)
                 );
                 case "SELECT" -> result = selection(
-                        new ImmutablePair<>(firstRelationName, firstRelation),
-                        Arrays.stream(Arrays.copyOfRange(tokenizedOperation, 3, lastAttribute)).toList()
+                        firstRelationPair,
+                        getAttributesFromQuery(tokenizedOperation, 3, lastAttribute)
                 );
                 case "DIVIDE" -> result = division(
-                        new ImmutablePair<>(firstRelationName, firstRelation),
-                        new ImmutablePair<>(secondRelationName, secondRelation),
-                        Arrays.stream(Arrays.copyOfRange(tokenizedOperation, 5, lastAttribute)).toList(),
+                        firstRelationPair,
+                        secondRelationPair,
+                        getAttributesFromQuery(tokenizedOperation, 5, lastAttribute),
                         operationNumber
                 );
                 case "JOIN" -> result = join(
-                        new ImmutablePair<>(firstRelationName, firstRelation),
-                        new ImmutablePair<>(secondRelationName, secondRelation),
-                        Arrays.stream(Arrays.copyOfRange(tokenizedOperation, 5, lastAttribute)).toList()
+                        firstRelationPair,
+                        secondRelationPair,
+                        getAttributesFromQuery(tokenizedOperation, 5, lastAttribute)
                 );
                 case "GET" -> relationGetMap.put(firstRelationName, firstRelation);
                 case "ANSWER" -> relationMap.put("", firstRelation);

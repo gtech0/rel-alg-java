@@ -18,35 +18,48 @@
   ],
   "sol2-1": [
     {
-      "phone": [
-        "643634"
-      ],
       "name": [
-        "andrew"
+        "alex"
+      ],
+      "text": [
+        "uiop"
+      ],
+      "group": [
+        "group1"
       ]
     },
     {
-      "phone": [
-        "325235"
-      ],
-      "name": [
-        "jim"
-      ]
-    },
-    {
-      "phone": [
-        "754743"
-      ],
-      "name": [
-        "john"
-      ]
-    },
-    {
-      "phone": [
-        "525632"
-      ],
       "name": [
         "max"
+      ],
+      "text": [
+        "tjrtjrtj"
+      ],
+      "group": [
+        "group1"
+      ]
+    },
+    {
+      "name": [
+        "john"
+      ],
+      "text": [
+        "qwerty"
+      ],
+      "group": [
+        "group1"
+      ]
+    }
+  ],
+  "sol3-1": [
+    {
+      "Student": [
+        "Fred"
+      ]
+    },
+    {
+      "Student": [
+        "Sarah"
       ]
     }
   ]

@@ -17,8 +17,8 @@ import static java.util.Map.entry;
 import static org.apache.commons.lang3.math.NumberUtils.isCreatable;
 
 public class Select {
-    public static Set<RowMap> selection(Pair<String, Set<RowMap>> relation,
-                                        List<String> tokens) {
+    public static Set<RowMap> selection(Pair<String, Set<RowMap>> relation, List<String> tokens
+    ) {
         Queue<String> RPN = shuntingYard(tokens);
         String relationName = relation.getLeft();
         Stack<Object> results = new Stack<>();

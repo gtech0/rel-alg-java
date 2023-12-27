@@ -76,9 +76,7 @@ public class InterpreterService {
         return new ResultDto("OK");
     }
 
-    public ResponseDataDto inputProcessing(List<String> query,
-                                           Map<String, Set<RowMap>> data
-    ) {
+    public ResponseDataDto inputProcessing(List<String> query, Map<String, Set<RowMap>> data) {
         testRepository.clear();
         testRepository.storeInMap(data);
         Map<String, Set<RowMap>> relationMap = testRepository.findAll();

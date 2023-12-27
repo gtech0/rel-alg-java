@@ -20,7 +20,7 @@ public class ExceptionAdvice {
                 .timestamp(new Date())
                 .status(HttpStatus.BAD_REQUEST.value())
                 .message(ex.getMessage())
-                .type(ex.getType())
+                .error(ex.getType())
                 .build();
         log.error(ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);

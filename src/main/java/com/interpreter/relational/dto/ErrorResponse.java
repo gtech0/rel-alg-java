@@ -19,6 +19,6 @@ public class ErrorResponse {
 
     private String message;
 
-    private String type;
+    private String error;
 
 }
